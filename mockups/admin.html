@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Rutas RedCicla</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex h-screen font-sans text-gray-800 overflow-hidden">
+
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div class="p-6 border-b border-gray-200 flex items-center gap-2 text-green-600 font-bold text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            Admin Panel
+        </div>
+        <nav class="flex-1 p-4 space-y-2 text-sm font-medium text-gray-600">
+            <a href="#" class="block p-3 rounded-lg hover:bg-gray-50">Dashboard Global</a>
+            <a href="#" class="block p-3 rounded-lg hover:bg-gray-50">Usuarios & Puntos</a>
+            <a href="#" class="block p-3 rounded-lg bg-green-50 text-green-700">Rutas de Recolección</a>
+            <a href="#" class="block p-3 rounded-lg hover:bg-gray-50">Vehículos & Personal</a>
+            <a href="#" class="block p-3 rounded-lg hover:bg-gray-50">Informes</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col">
+        <header class="bg-white p-4 border-b border-gray-200 flex justify-between items-center">
+            <h1 class="text-xl font-bold">Gestión de Rutas y Asignaciones</h1>
+            <div class="flex items-center gap-3">
+                <span class="text-sm">Elena P. (Administrador)</span>
+                <button
+                    class="text-sm text-red-500 border border-red-500 px-3 py-1 rounded hover:bg-red-50">Salir</button>
+            </div>
+        </header>
+
+        <div class="flex-1 p-6 flex gap-6 overflow-hidden">
+            <div class="w-80 bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col">
+                <h2 class="font-bold mb-4">Rutas de Hoy</h2>
+                <div class="space-y-3 overflow-y-auto">
+                    <div class="border border-green-200 bg-green-50 p-3 rounded-lg">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-sm">Ruta 1: Zona Norte</h3>
+                            <span class="text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded">En Progreso</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mb-2">Camión: AB-CD-12 (Carlos M.)</p>
+                        <p class="text-xs text-gray-600 mb-3">Progreso: 12/45 Puntos</p>
+                        <div class="flex gap-2">
+                            <button
+                                class="flex-1 bg-white border border-gray-300 text-xs py-1 rounded hover:bg-gray-50">Detalles</button>
+                            <button
+                                class="flex-1 bg-green-600 text-white text-xs py-1 rounded hover:bg-green-700">Re-optimizar</button>
+                        </div>
+                    </div>
+                    <div class="border border-gray-200 p-3 rounded-lg">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-sm">Ruta 2: Centro</h3>
+                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Pendiente</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mb-3">Sin vehículo asignado</p>
+                        <button
+                            class="w-full bg-gray-100 text-gray-700 border border-gray-300 text-xs py-1.5 rounded font-medium hover:bg-gray-200">Asignar
+                            Camión</button>
+                    </div>
+                </div>
+                <button
+                    class="mt-4 w-full bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-700 shadow">+
+                    Generar Nueva Ruta</button>
+            </div>
+
+            <div
+                class="flex-1 bg-gray-200 rounded-xl shadow-sm border border-gray-300 flex items-center justify-center relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10">
+                </div>
+                <div class="text-center z-10">
+                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
+                        </path>
+                    </svg>
+                    <p class="text-gray-500 font-medium text-lg">Integración con Google Maps API</p>
+                    <p class="text-gray-400 text-sm">(Visualización de trayectos y Puntos de Reciclaje)</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>
