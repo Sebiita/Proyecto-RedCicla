@@ -12,7 +12,17 @@ def _inicializar_data_json():
     """Inicializa data.json si no existe"""
     if not os.path.exists(DATA_FILE):
         with open(DATA_FILE, "w") as f:
-            json.dump({"usuarios": []}, f, indent=4)
+            json.dump({"usuarios": [], "camiones": [], "puntos": [], "rutas": []}, f, indent=4)
+
+
+def _obtener_proximo_id(seccion: str) -> int:
+    """Obtiene el próximo ID disponible para una sección"""
+    _inicializar_data_json()
+    with open(DATA_FILE, "r") as f:
+        data = json.load(f)
+    if data.get(seccion, []):
+        return max(item.get("id", 0) for item in data[seccion]) + 1
+    return 1
 
 
 def _usuario_existe(correo: str) -> bool:
@@ -23,7 +33,7 @@ def _usuario_existe(correo: str) -> bool:
     return any(usuario["correo"] == correo for usuario in data["usuarios"])
 
 
-def services_crear_usuario(nombre: str, correo: str, contraseña: str):
+def services_crear_usuario(nombre: str, apellido: str, correo: str, rol: str, contraseña: str, estado: str = "Activo"):
     """Crea un nuevo usuario con contraseña hasheada"""
     try:
         _inicializar_data_json()
@@ -35,14 +45,22 @@ def services_crear_usuario(nombre: str, correo: str, contraseña: str):
         # Hashear contraseña
         contraseña_hasheada = ph.hash(contraseña)
         
+        proximo_id = _obtener_proximo_id("usuarios")
+        
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
         
-        data["usuarios"].append({
+        nuevo_usuario = {
+            "id": proximo_id,
             "nombre": nombre,
+            "apellido": apellido,
             "correo": correo,
-            "contraseña": contraseña_hasheada
-        })
+            "rol": rol,
+            "contraseña": contraseña_hasheada,
+            "estado": estado
+        }
+        
+        data["usuarios"].append(nuevo_usuario)
         
         with open(DATA_FILE, "w") as f:
             json.dump(data, f, indent=4)
@@ -50,8 +68,12 @@ def services_crear_usuario(nombre: str, correo: str, contraseña: str):
         return {
             "mensaje": "Usuario creado correctamente",
             "usuario": {
+                "id": proximo_id,
                 "nombre": nombre,
-                "correo": correo
+                "apellido": apellido,
+                "correo": correo,
+                "rol": rol,
+                "estado": estado
             }
         }
     except Exception as e:
@@ -68,17 +90,53 @@ def services_leer_usuario(correo: str):
         
         for usuario in data["usuarios"]:
             if usuario["correo"] == correo:
-                # Retornar sin la contraseña
                 return {
                     "usuario": {
+                        "id": usuario.get("id"),
                         "nombre": usuario["nombre"],
-                        "correo": usuario["correo"]
+                        "apellido": usuario.get("apellido", ""),
+                        "correo": usuario["correo"],
+                        "rol": usuario.get("rol", ""),
+                        "estado": usuario.get("estado", "Activo")
                     }
                 }
         
         return {"error": "Usuario no encontrado"}
     except Exception as e:
         return {"error": f"Error al leer usuario: {str(e)}"}
+
+
+def services_actualizar_usuario(correo: str, nombre: str = None, apellido: str = None, rol: str = None, estado: str = None):
+    """Actualiza datos de un usuario"""
+    try:
+        _inicializar_data_json()
+        
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+        
+        usuario_encontrado = False
+        for usuario in data["usuarios"]:
+            if usuario["correo"] == correo:
+                if nombre:
+                    usuario["nombre"] = nombre
+                if apellido:
+                    usuario["apellido"] = apellido
+                if rol:
+                    usuario["rol"] = rol
+                if estado:
+                    usuario["estado"] = estado
+                usuario_encontrado = True
+                break
+        
+        if not usuario_encontrado:
+            return {"error": "Usuario no encontrado"}
+        
+        with open(DATA_FILE, "w") as f:
+            json.dump(data, f, indent=4)
+        
+        return {"mensaje": "Usuario actualizado correctamente"}
+    except Exception as e:
+        return {"error": f"Error al actualizar usuario: {str(e)}"}
 
 
 def services_inicio_de_sesion(correo: str, contraseña: str):
@@ -98,8 +156,12 @@ def services_inicio_de_sesion(correo: str, contraseña: str):
                     return {
                         "mensaje": "Sesión iniciada correctamente",
                         "usuario": {
+                            "id": usuario.get("id"),
                             "nombre": usuario["nombre"],
-                            "correo": usuario["correo"]
+                            "apellido": usuario.get("apellido", ""),
+                            "correo": usuario["correo"],
+                            "rol": usuario.get("rol", ""),
+                            "estado": usuario.get("estado", "Activo")
                         }
                     }
                 except VerifyMismatchError:
