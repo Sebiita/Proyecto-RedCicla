@@ -1,5 +1,15 @@
 {
-    "usuarios": [],
+    "usuarios": [
+        {
+            "id": 1,
+            "nombre": "John",
+            "apellido": "Rojas",
+            "correo": "johnrojas@gmail.com",
+            "rol": "Admin",
+            "contrase\u00f1a": "$argon2id$v=19$m=65536,t=3,p=4$DuKxrid2y1x2Qw6Rys4cGw$UnvuOt3DLd2dNUz68G5s4GgzDpFwpfx410mEQXO9d3A",
+            "estado": "Activo"
+        }
+    ],
     "camiones": [],
     "puntos": [],
     "rutas": []

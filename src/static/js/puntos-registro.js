@@ -308,6 +308,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ========== SALIR (CERRAR SESIÓN) ==========
+    const btnSalir = document.getElementById('btn-salir');
+    if (btnSalir) {
+        btnSalir.addEventListener('click', () => {
+            localStorage.removeItem('currentUser');
+            mostrarToast('Cerrando sesión...', 'info');
+            setTimeout(() => {
+                window.location.href = 'landing.html';
+            }, 800);
+        });
+    }
+
     // ========== UTILIDADES ==========
     function escapeHtml(text) {
         if (text === null || text === undefined) return '';

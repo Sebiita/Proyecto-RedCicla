@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedCicla - Inicio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-white font-sans text-gray-800">
+
+    <nav class="flex items-center justify-between p-6 max-w-7xl mx-auto">
+        <a href="landing.html" class="flex items-center gap-2 text-green-600 font-bold text-2xl hover:opacity-85 transition-opacity">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            RedCicla
+        </a>
+        <div class="hidden md:flex gap-6 font-medium">
+            <a href="landing.html" class="hover:text-green-600">Inicio</a>
+            <a href="#" class="hover:text-green-600">Cómo Funciona</a>
+            <a href="#" class="hover:text-green-600">Para Empresas</a>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="window.location.href='login.html'" class="text-green-600 font-medium hover:underline transition-all duration-300">Iniciar Sesión</button>
+            <button onclick="window.location.href='registro.html'"
+                class="bg-green-600 text-white px-5 py-2 rounded-full font-medium hover:bg-green-700 transition-all duration-300 transform active:scale-95 shadow-md hover:shadow-lg">Registrarse</button>
+        </div>
+    </nav>
+
+    <header class="max-w-7xl mx-auto p-6 md:py-20 flex flex-col md:flex-row items-center gap-12">
+        <div class="flex-1 space-y-6">
+            <h1 class="text-5xl font-extrabold leading-tight text-gray-900">Haz del Reciclaje Parte de Tu Vida, <span
+                    class="text-green-600">Fácilmente.</span></h1>
+            <p class="text-lg text-gray-600">Únete a la red RedCicla y gestiona tu reciclaje de forma inteligente.
+                Recolección a domicilio, seguimiento de impacto, y recompensas para ti y tu comunidad.</p>
+            <button onclick="window.location.href='registro.html'"
+                class="bg-green-600 text-white px-8 py-3 rounded-full text-lg font-bold hover:bg-green-700 shadow-lg hover:shadow-xl transition-all duration-300 transform active:scale-95">¡Empieza
+                a Reciclar Hoy!</button>
+        </div>
+        <div class="flex-1 bg-green-100 rounded-3xl h-80 flex items-center justify-center border-4 border-green-50">
+            <span class="text-green-500 font-medium">[Imagen de familia reciclando o camión de RedCicla]</span>
+        </div>
+    </header>
+
+    <section class="bg-gray-50 py-16">
+        <div class="max-w-7xl mx-auto p-6 text-center">
+            <h2 class="text-3xl font-bold mb-12">¿Cómo Funciona?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="p-6 bg-white rounded-xl shadow-sm">
+                    <div
+                        class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                        1</div>
+                    <h3 class="font-bold mb-2">Separa</h3>
+                    <p class="text-sm text-gray-500">Clasifica tus residuos en casa.</p>
+                </div>
+                <div class="p-6 bg-white rounded-xl shadow-sm">
+                    <div
+                        class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                        2</div>
+                    <h3 class="font-bold mb-2">Agenda</h3>
+                    <p class="text-sm text-gray-500">Solicita el retiro desde la app.</p>
+                </div>
+                <div class="p-6 bg-white rounded-xl shadow-sm">
+                    <div
+                        class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                        3</div>
+                    <h3 class="font-bold mb-2">Recolectamos</h3>
+                    <p class="text-sm text-gray-500">Nuestros camiones van a tu puerta.</p>
+                </div>
+                <div class="p-6 bg-white rounded-xl shadow-sm">
+                    <div
+                        class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                        4</div>
+                    <h3 class="font-bold mb-2">Impacta & Gana</h3>
+                    <p class="text-sm text-gray-500">Suma puntos y ayuda al planeta.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>

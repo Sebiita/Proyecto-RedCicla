@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedCicla - Iniciar Sesión</title>
+    <!-- Google Fonts for Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        eco: {
+                            light: '#e6f4ea',
+                            DEFAULT: '#34a853',
+                            dark: '#1e8e3e',
+                            glow: 'rgba(52, 168, 83, 0.15)',
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-in-right': 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideInRight: {
+                            '0%': { opacity: '0', transform: 'translateX(20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: radial-gradient(circle at 10% 20%, rgba(230, 244, 234, 1) 0%, rgba(255, 255, 255, 1) 90.1%);
+        }
+        .form-input:focus {
+            box-shadow: 0 0 0 4px var(--tw-color-eco-glow);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen font-sans p-4 relative overflow-x-hidden">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full"></div>
+
+    <!-- Main Login Card -->
+    <div class="bg-white/90 backdrop-blur-md p-8 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-white/20 w-full max-w-md mx-auto opacity-0 animate-fade-in-up">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <a href="landing.html" class="inline-flex items-center justify-center gap-2 mb-3 hover:opacity-80 transition-opacity">
+                <div class="p-2 bg-eco/10 rounded-2xl text-eco">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-extrabold text-gray-800 font-display tracking-tight">RedCicla</h1>
+            </a>
+            <h2 class="text-2xl font-bold text-gray-800 font-display">Bienvenido</h2>
+            <p class="text-gray-500 text-sm mt-1">Panel de Gestión de Reciclaje y Rutas</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="space-y-6">
+            
+            <!-- Email Input -->
+            <div>
+                <label for="email" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Correo Electrónico</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </span>
+                    <input id="email" name="email" type="email" autocomplete="email" required 
+                        class="form-input appearance-none block w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:border-eco focus:ring-0 transition-all text-gray-800 bg-gray-50/50" 
+                        placeholder="tu@correo.com">
+                </div>
+            </div>
+
+            <!-- Password Input -->
+            <div>
+                <label for="password" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Contraseña</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </span>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required 
+                        class="form-input appearance-none block w-full pl-9 pr-10 py-3 border border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:border-eco focus:ring-0 transition-all text-gray-800 bg-gray-50/50" 
+                        placeholder="••••••••">
+                    <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5 eye-open" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        <svg class="w-5 h-5 eye-closed hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Remember Me & Forgot Password -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input id="remember-me" name="remember-me" type="checkbox" 
+                        class="h-4.5 w-4.5 text-eco focus:ring-eco border-gray-300 rounded-lg cursor-pointer accent-eco transition-all">
+                    <label for="remember-me" class="ml-2 block text-sm text-gray-600 select-none cursor-pointer"> Recordarme </label>
+                </div>
+
+                <div class="text-sm">
+                    <a href="#" class="font-semibold text-eco hover:text-eco-dark hover:underline transition-all"> ¿Olvidaste tu contraseña? </a>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" id="submit-btn" class="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-eco/10 text-sm font-semibold text-white bg-eco hover:bg-eco-dark hover:shadow-eco/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-eco transition-all duration-300 transform active:scale-[0.98]">
+                    <span>Iniciar Sesión</span>
+                    <!-- Spinner SVG -->
+                    <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </div>
+        </form>
+
+        <!-- Redirect to Registration -->
+        <div class="mt-6 text-center border-t border-gray-100 pt-6">
+            <p class="text-sm text-gray-500">
+                ¿No tienes una cuenta? 
+                <a href="registro.html" class="font-bold text-eco hover:text-eco-dark transition-all hover:underline">Regístrate aquí</a>
+            </p>
+        </div>
+        
+    </div>
+
+    <!-- Decorative elements -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-eco/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-eco/20 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+
+    <!-- Script Externo de Login -->
+    <script src="js/login.js"></script>
+</body>
+</html>
