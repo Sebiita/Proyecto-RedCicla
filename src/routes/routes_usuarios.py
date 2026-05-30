@@ -1,20 +1,33 @@
-from services.services_usuario import services_crear_usuario, services_leer_usuario, services_inicio_de_sesion, services_eliminar_usuario
+from fastapi import APIRouter
+from models.usuario import UsuarioCrear, UsuarioLogin, UsuarioEliminar
+from services.services_usuario import (
+    services_crear_usuario,
+    services_leer_usuario,
+    services_inicio_de_sesion,
+    services_eliminar_usuario
+)
+
+router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 
-def rourtes_crear_usuario(nombre: str, correo: str, contraseña: str):
-    return services_crear_usuario(nombre, correo, contraseña)
+@router.post("/registrar")
+async def rourtes_crear_usuario(usuario: UsuarioCrear):
+    return services_crear_usuario(usuario.nombre, usuario.correo, usuario.contraseña)
 
 
-def routes_leer_usuario(correo: str):
+@router.get("/obtener/{correo}")
+async def routes_leer_usuario(correo: str):
     return services_leer_usuario(correo)
 
 
-def routes_incio_de_sesion(correo: str, contraseña: str):
-    return services_inicio_de_sesion(correo, contraseña)
+@router.post("/login")
+async def routes_incio_de_sesion(credenciales: UsuarioLogin):
+    return services_inicio_de_sesion(credenciales.correo, credenciales.contraseña)
 
 
-def routes_eliminar_usuario(correo: str):
-    return services_eliminar_usuario(correo)
+@router.delete("/eliminar")
+async def routes_eliminar_usuario(datos: UsuarioEliminar):
+    return services_eliminar_usuario(datos.correo)
 
 
 
