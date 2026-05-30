@@ -3,11 +3,11 @@
  *
  * Dependencias: puntos-service.js (debe cargarse antes)
  *
- * Funcionalidades:
- * - Carga puntos desde PuntosService
- * - Renderiza lista lateral con búsqueda y filtros
- * - Integra Google Maps con marcadores (si hay API key)
- * - Muestra placeholder si no hay API key configurada
+ * Conectado al backend FastAPI:
+ *   GET /puntos/obtener → Listar todos los puntos
+ *
+ * Modelo de datos del backend:
+ *   { id, municipalidad, latitud, longitud, estado, urgencia, capacidad_maxima, capacidad_ocupada }
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let filtroActual = 'todos';
     let busquedaActual = '';
     let puntoSeleccionado = null;
+    let todosLosPuntos = []; // Cache de puntos cargados del backend
 
     // Google Maps
     let map = null;
@@ -50,24 +51,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
+    // ========== CARGAR PUNTOS DESDE BACKEND ==========
+    async function cargarPuntos() {
+        todosLosPuntos = await PuntosService.obtenerTodos();
+    }
+
     // ========== OBTENER PUNTOS FILTRADOS ==========
     function obtenerPuntosFiltrados() {
-        // TODO: Cuando el backend esté listo, PuntosService hará llamadas al API
-        let puntos = PuntosService.obtenerTodos();
+        let puntos = [...todosLosPuntos];
 
-        // Filtro por estado
+        // Filtro por estado (el backend usa "Activo", "Inactivo", "Mantencion")
         if (filtroActual === 'activo') {
-            puntos = puntos.filter(p => p.estado === 'activo');
+            puntos = puntos.filter(p => p.estado === 'Activo');
         } else if (filtroActual === 'inactivo') {
-            puntos = puntos.filter(p => p.estado === 'inactivo');
+            puntos = puntos.filter(p => p.estado !== 'Activo');
         }
 
-        // Filtro por búsqueda
+        // Filtro por búsqueda (buscar en municipalidad)
         if (busquedaActual.trim()) {
             const query = busquedaActual.toLowerCase().trim();
             puntos = puntos.filter(p =>
-                p.nombre.toLowerCase().includes(query) ||
-                p.direccion.toLowerCase().includes(query)
+                p.municipalidad.toLowerCase().includes(query)
             );
         }
 
@@ -101,18 +105,29 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '';
         puntos.forEach(punto => {
             const isSelected = puntoSeleccionado === punto.id ? 'selected' : '';
-            const badgeClass = punto.estado === 'activo' ? 'badge-activo' : 'badge-inactivo';
-            const estadoTexto = punto.estado === 'activo' ? 'Activo' : 'Inactivo';
 
-            const materialesHtml = punto.tipoMaterial
-                .map(m => `<span class="material-tag">${escapeHtml(m)}</span>`)
-                .join('');
+            // Badge de estado
+            let badgeClass = 'badge-activo';
+            if (punto.estado !== 'Activo') badgeClass = 'badge-inactivo';
+
+            // Porcentaje de capacidad
+            const porcCapacidad = punto.capacidad_maxima > 0
+                ? Math.round((punto.capacidad_ocupada / punto.capacidad_maxima) * 100)
+                : 0;
+
+            // Badge de urgencia
+            let urgenciaIcon = '';
+            switch (punto.urgencia) {
+                case 'Alta': urgenciaIcon = '⚠️'; break;
+                case 'Crítica': urgenciaIcon = '🔴'; break;
+                default: urgenciaIcon = '';
+            }
 
             html += `
                 <div class="punto-card ${isSelected}" data-id="${punto.id}" data-lat="${punto.latitud}" data-lng="${punto.longitud}">
                     <div class="punto-card-header">
-                        <h3 class="punto-card-nombre">${escapeHtml(punto.nombre)}</h3>
-                        <span class="badge ${badgeClass}">${estadoTexto}</span>
+                        <h3 class="punto-card-nombre">${urgenciaIcon} ${escapeHtml(punto.municipalidad)}</h3>
+                        <span class="badge ${badgeClass}">${escapeHtml(punto.estado)}</span>
                     </div>
                     <p class="punto-card-direccion">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,17 +136,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
-                        ${escapeHtml(punto.direccion)}
+                        ${punto.latitud.toFixed(4)}, ${punto.longitud.toFixed(4)}
                     </p>
                     <div class="punto-card-materiales">
-                        ${materialesHtml}
+                        <span class="material-tag">Urgencia: ${escapeHtml(punto.urgencia)}</span>
+                        <span class="material-tag">${porcCapacidad}% lleno</span>
                     </div>
                     <div class="punto-card-horario">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                         </svg>
-                        ${escapeHtml(punto.horario || 'Sin horario')}
+                        ${punto.capacidad_ocupada}/${punto.capacidad_maxima} kg
                     </div>
                 </div>
             `;
@@ -142,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Event listeners para las tarjetas
         document.querySelectorAll('.punto-card').forEach(card => {
             card.addEventListener('click', () => {
-                const id = card.dataset.id;
+                const id = parseInt(card.dataset.id);
                 const lat = parseFloat(card.dataset.lat);
                 const lng = parseFloat(card.dataset.lng);
 
@@ -164,8 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Inicializa Google Maps.
-     * Esta función es llamada como callback por la API de Google Maps
-     * o manualmente si no hay API key.
+     * Esta función es llamada como callback por la API de Google Maps.
      */
     window.initMap = function () {
         // Ocultar placeholder
@@ -209,30 +224,38 @@ document.addEventListener('DOMContentLoaded', () => {
         markers = [];
 
         puntos.forEach(punto => {
+            // Color del marcador según estado y urgencia
+            let iconUrl = 'https://maps.google.com/mapfiles/ms/icons/green-dot.png';
+            if (punto.estado !== 'Activo') {
+                iconUrl = 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png';
+            }
+            if (punto.urgencia === 'Alta' || punto.urgencia === 'Crítica') {
+                iconUrl = 'https://maps.google.com/mapfiles/ms/icons/red-dot.png';
+            }
+
             const marker = new google.maps.Marker({
                 position: { lat: punto.latitud, lng: punto.longitud },
                 map: map,
-                title: punto.nombre,
+                title: punto.municipalidad,
                 icon: {
-                    url: punto.estado === 'activo'
-                        ? 'https://maps.google.com/mapfiles/ms/icons/green-dot.png'
-                        : 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
+                    url: iconUrl,
                     scaledSize: new google.maps.Size(40, 40)
                 }
             });
 
+            // Porcentaje de capacidad
+            const porcCapacidad = punto.capacidad_maxima > 0
+                ? Math.round((punto.capacidad_ocupada / punto.capacidad_maxima) * 100)
+                : 0;
+
             // Info Window al hacer clic en marcador
             marker.addListener('click', () => {
-                const materialesHtml = punto.tipoMaterial
-                    .map(m => `<span class="material-tag">${escapeHtml(m)}</span>`)
-                    .join('');
-
                 const content = `
                     <div class="gm-info-window">
-                        <h3>${escapeHtml(punto.nombre)}</h3>
-                        <p>${escapeHtml(punto.direccion)}</p>
-                        <p>🕐 ${escapeHtml(punto.horario || 'Sin horario')}</p>
-                        <div class="info-materiales">${materialesHtml}</div>
+                        <h3>${escapeHtml(punto.municipalidad)}</h3>
+                        <p>📍 ${punto.latitud.toFixed(4)}, ${punto.longitud.toFixed(4)}</p>
+                        <p>📊 Estado: ${escapeHtml(punto.estado)} | Urgencia: ${escapeHtml(punto.urgencia)}</p>
+                        <p>📦 Capacidad: ${punto.capacidad_ocupada}/${punto.capacidad_maxima} kg (${porcCapacidad}%)</p>
                     </div>
                 `;
 
@@ -242,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Seleccionar en la lista lateral
                 puntoSeleccionado = punto.id;
                 document.querySelectorAll('.punto-card').forEach(c => {
-                    c.classList.toggle('selected', c.dataset.id === punto.id);
+                    c.classList.toggle('selected', parseInt(c.dataset.id) === punto.id);
                 });
 
                 // Scroll al punto en la lista
@@ -260,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (markers.length > 0) {
             const bounds = new google.maps.LatLngBounds();
             markers.forEach(m => bounds.extend(m.getPosition()));
-            // Solo ajustar si hay más de un marcador
             if (markers.length > 1) {
                 map.fitBounds(bounds, { padding: 50 });
             }
@@ -305,22 +327,28 @@ document.addEventListener('DOMContentLoaded', () => {
             busquedaActual = buscarInput.value;
             puntoSeleccionado = null;
             renderizarLista();
-        }, 250); // Debounce de 250ms
+        }, 250);
     });
 
     // ========== UTILIDADES ==========
     function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = String(text);
         return div.innerHTML;
     }
 
     // ========== INICIALIZACIÓN ==========
-    renderizarLista();
+    async function init() {
+        await cargarPuntos();
+        renderizarLista();
 
-    // Si no hay Google Maps cargado, mostrar mensaje
-    if (typeof google === 'undefined' || !google.maps) {
-        console.info('Google Maps API no cargada. Mostrando placeholder.');
-        console.info('Para habilitar el mapa, configura GOOGLE_MAPS_API_KEY en puntos-mapa.html');
+        // Si no hay Google Maps cargado, mostrar mensaje
+        if (typeof google === 'undefined' || !google.maps) {
+            console.info('Google Maps API no cargada. Mostrando placeholder.');
+            console.info('Para habilitar el mapa, configura GOOGLE_MAPS_API_KEY en puntos-mapa.html');
+        }
     }
+
+    init();
 });

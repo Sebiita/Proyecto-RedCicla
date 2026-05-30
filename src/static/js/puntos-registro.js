@@ -2,6 +2,11 @@
  * puntos-registro.js — Lógica de la pantalla de registro de puntos (HU-03)
  *
  * Dependencias: puntos-service.js (debe cargarse antes)
+ *
+ * Conectado al backend FastAPI:
+ *   POST   /puntos/registrar  → Crear punto
+ *   GET    /puntos/obtener    → Listar todos
+ *   DELETE /puntos/eliminar/{id} → Eliminar punto
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,14 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const contadorPuntos = document.getElementById('contador-puntos');
     const toastContainer = document.getElementById('toast-container');
 
-    // Campos del formulario
+    // Campos del formulario (coinciden con el modelo del backend)
     const campos = {
-        nombre: document.getElementById('punto-nombre'),
-        direccion: document.getElementById('punto-direccion'),
+        municipalidad: document.getElementById('punto-municipalidad'),
         latitud: document.getElementById('punto-latitud'),
         longitud: document.getElementById('punto-longitud'),
-        horario: document.getElementById('punto-horario'),
-        estado: document.getElementById('punto-estado')
+        estado: document.getElementById('punto-estado'),
+        urgencia: document.getElementById('punto-urgencia'),
+        'capacidad-maxima': document.getElementById('punto-capacidad-maxima'),
+        'capacidad-ocupada': document.getElementById('punto-capacidad-ocupada')
     };
 
     // Modal
@@ -35,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.textContent = mensaje;
         toastContainer.appendChild(toast);
 
-        // Remover después de la animación
         setTimeout(() => {
             if (toast.parentNode) {
                 toast.parentNode.removeChild(toast);
@@ -47,20 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function validarFormulario() {
         let valido = true;
 
-        // Nombre
-        if (!campos.nombre.value.trim()) {
-            mostrarError('nombre', 'El nombre es obligatorio.');
+        // Municipalidad
+        if (!campos.municipalidad.value.trim()) {
+            mostrarError('municipalidad', 'La municipalidad es obligatoria.');
             valido = false;
         } else {
-            limpiarError('nombre');
-        }
-
-        // Dirección
-        if (!campos.direccion.value.trim()) {
-            mostrarError('direccion', 'La dirección es obligatoria.');
-            valido = false;
-        } else {
-            limpiarError('direccion');
+            limpiarError('municipalidad');
         }
 
         // Latitud
@@ -81,13 +78,25 @@ document.addEventListener('DOMContentLoaded', () => {
             limpiarError('longitud');
         }
 
-        // Materiales
-        const materialesSeleccionados = document.querySelectorAll('input[name="tipoMaterial"]:checked');
-        if (materialesSeleccionados.length === 0) {
-            mostrarError('material', 'Selecciona al menos un tipo de material.');
+        // Capacidad máxima
+        const capMax = parseFloat(campos['capacidad-maxima'].value);
+        if (isNaN(capMax) || capMax <= 0) {
+            mostrarError('capacidad-maxima', 'Capacidad máxima debe ser mayor a 0.');
             valido = false;
         } else {
-            limpiarError('material');
+            limpiarError('capacidad-maxima');
+        }
+
+        // Capacidad ocupada
+        const capOcup = parseFloat(campos['capacidad-ocupada'].value || '0');
+        if (isNaN(capOcup) || capOcup < 0) {
+            mostrarError('capacidad-ocupada', 'Capacidad ocupada no puede ser negativa.');
+            valido = false;
+        } else if (capOcup > capMax) {
+            mostrarError('capacidad-ocupada', 'Capacidad ocupada no puede superar la máxima.');
+            valido = false;
+        } else {
+            limpiarError('capacidad-ocupada');
         }
 
         return valido;
@@ -99,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
             errorEl.textContent = mensaje;
             errorEl.classList.add('visible');
         }
-        // Agregar clase error al input si existe
         if (campos[campo]) {
             campos[campo].classList.add('error');
         }
@@ -116,49 +124,64 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function limpiarTodosErrores() {
-        ['nombre', 'direccion', 'latitud', 'longitud', 'material'].forEach(limpiarError);
+        ['municipalidad', 'latitud', 'longitud', 'capacidad-maxima', 'capacidad-ocupada'].forEach(limpiarError);
     }
 
     // ========== SUBMIT DEL FORMULARIO ==========
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         limpiarTodosErrores();
 
         if (!validarFormulario()) return;
 
-        // Recoger materiales seleccionados
-        const materialesChecked = document.querySelectorAll('input[name="tipoMaterial"]:checked');
-        const tipoMaterial = Array.from(materialesChecked).map(cb => cb.value);
-
-        // Construir objeto punto
+        // Construir objeto punto según modelo del backend (PuntoRecicljeCrear)
         const nuevoPunto = {
-            nombre: campos.nombre.value.trim(),
-            direccion: campos.direccion.value.trim(),
+            municipalidad: campos.municipalidad.value.trim(),
             latitud: parseFloat(campos.latitud.value),
             longitud: parseFloat(campos.longitud.value),
-            tipoMaterial: tipoMaterial,
-            horario: campos.horario.value.trim() || 'No especificado',
-            estado: campos.estado.value
+            estado: campos.estado.value,
+            urgencia: campos.urgencia.value,
+            capacidad_maxima: parseFloat(campos['capacidad-maxima'].value),
+            capacidad_ocupada: parseFloat(campos['capacidad-ocupada'].value || '0')
         };
 
-        // Guardar vía servicio
-        // TODO: Cuando el backend esté listo, PuntosService.guardar() hará un POST al API
-        const puntoGuardado = PuntosService.guardar(nuevoPunto);
+        // Deshabilitar botón mientras se procesa
+        const btnRegistrar = document.getElementById('btn-registrar');
+        btnRegistrar.disabled = true;
+        btnRegistrar.textContent = 'Registrando...';
 
-        if (puntoGuardado) {
-            mostrarToast(`Punto "${puntoGuardado.nombre}" registrado exitosamente.`, 'success');
-            form.reset();
-            limpiarTodosErrores();
-            renderizarTabla();
-        } else {
-            mostrarToast('Error al registrar el punto. Intenta nuevamente.', 'error');
+        try {
+            const resultado = await PuntosService.guardar(nuevoPunto);
+
+            if (resultado.error) {
+                mostrarToast(`Error: ${resultado.error}`, 'error');
+            } else {
+                mostrarToast(`Punto en "${nuevoPunto.municipalidad}" registrado exitosamente.`, 'success');
+                form.reset();
+                // Restaurar valor por defecto del select de urgencia
+                campos.urgencia.value = 'Normal';
+                campos['capacidad-ocupada'].value = '0';
+                limpiarTodosErrores();
+                await renderizarTabla();
+            }
+        } catch (error) {
+            mostrarToast('Error de conexión con el servidor.', 'error');
+            console.error('Error al registrar punto:', error);
+        } finally {
+            btnRegistrar.disabled = false;
+            btnRegistrar.innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4v16m8-8H4"></path>
+                </svg>
+                Registrar Punto
+            `;
         }
     });
 
     // ========== RENDERIZAR TABLA ==========
-    function renderizarTabla() {
-        // TODO: Cuando el backend esté listo, PuntosService.obtenerTodos() hará un GET al API
-        const puntos = PuntosService.obtenerTodos();
+    async function renderizarTabla() {
+        const puntos = await PuntosService.obtenerTodos();
 
         // Actualizar contador
         contadorPuntos.textContent = `${puntos.length} punto${puntos.length !== 1 ? 's' : ''}`;
@@ -182,16 +205,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Construir tabla
+        // Construir tabla con campos del backend
         let html = `
             <table class="puntos-table">
                 <thead>
                     <tr>
-                        <th>Nombre</th>
-                        <th>Dirección</th>
-                        <th>Materiales</th>
-                        <th>Horario</th>
+                        <th>ID</th>
+                        <th>Municipalidad</th>
+                        <th>Coordenadas</th>
                         <th>Estado</th>
+                        <th>Urgencia</th>
+                        <th>Capacidad</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -199,22 +223,43 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         puntos.forEach(punto => {
-            const materialesHtml = punto.tipoMaterial
-                .map(m => `<span class="material-tag">${m}</span>`)
-                .join('');
+            // Badge de estado
+            let badgeClass = 'badge-activo';
+            if (punto.estado === 'Inactivo') badgeClass = 'badge-inactivo';
+            else if (punto.estado === 'Mantencion') badgeClass = 'badge-inactivo';
 
-            const badgeClass = punto.estado === 'activo' ? 'badge-activo' : 'badge-inactivo';
-            const estadoTexto = punto.estado === 'activo' ? 'Activo' : 'Inactivo';
+            // Badge de urgencia
+            let urgenciaClass = '';
+            switch (punto.urgencia) {
+                case 'Baja': urgenciaClass = 'badge-activo'; break;
+                case 'Normal': urgenciaClass = ''; break;
+                case 'Alta': urgenciaClass = 'badge-inactivo'; break;
+                case 'Crítica': urgenciaClass = 'badge-inactivo'; break;
+                default: urgenciaClass = '';
+            }
+
+            // Porcentaje de capacidad
+            const porcCapacidad = punto.capacidad_maxima > 0
+                ? Math.round((punto.capacidad_ocupada / punto.capacidad_maxima) * 100)
+                : 0;
 
             html += `
                 <tr>
-                    <td style="font-weight: 600; color: var(--rc-gray-800);">${escapeHtml(punto.nombre)}</td>
-                    <td>${escapeHtml(punto.direccion)}</td>
-                    <td><div class="materiales-tags">${materialesHtml}</div></td>
-                    <td>${escapeHtml(punto.horario || 'N/A')}</td>
-                    <td><span class="badge ${badgeClass}">${estadoTexto}</span></td>
+                    <td style="font-weight: 600; color: var(--rc-gray-800);">#${punto.id}</td>
+                    <td style="font-weight: 600;">${escapeHtml(punto.municipalidad)}</td>
+                    <td style="font-size: 0.75rem; color: var(--rc-gray-500);">${punto.latitud.toFixed(4)}, ${punto.longitud.toFixed(4)}</td>
+                    <td><span class="badge ${badgeClass}">${escapeHtml(punto.estado)}</span></td>
+                    <td><span class="badge ${urgenciaClass}">${escapeHtml(punto.urgencia)}</span></td>
                     <td>
-                        <button class="btn-danger btn-eliminar" data-id="${punto.id}" data-nombre="${escapeHtml(punto.nombre)}">
+                        <div style="font-size: 0.75rem;">
+                            ${punto.capacidad_ocupada}/${punto.capacidad_maxima} kg
+                            <div style="background: var(--rc-gray-200); border-radius: 9999px; height: 4px; margin-top: 2px;">
+                                <div style="background: ${porcCapacidad > 80 ? 'var(--rc-red-500)' : 'var(--rc-green-600)'}; border-radius: 9999px; height: 100%; width: ${Math.min(porcCapacidad, 100)}%;"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-danger btn-eliminar" data-id="${punto.id}" data-nombre="${escapeHtml(punto.municipalidad)}">
                             Eliminar
                         </button>
                     </td>
@@ -228,8 +273,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Event listeners para botones eliminar
         document.querySelectorAll('.btn-eliminar').forEach(btn => {
             btn.addEventListener('click', () => {
-                puntoIdAEliminar = btn.dataset.id;
-                modalNombre.textContent = `¿Deseas eliminar "${btn.dataset.nombre}"? Esta acción no se puede deshacer.`;
+                puntoIdAEliminar = parseInt(btn.dataset.id);
+                modalNombre.textContent = `¿Deseas eliminar el punto #${btn.dataset.id} (${btn.dataset.nombre})? Esta acción no se puede deshacer.`;
                 modalOverlay.classList.add('visible');
             });
         });
@@ -241,16 +286,15 @@ document.addEventListener('DOMContentLoaded', () => {
         puntoIdAEliminar = null;
     });
 
-    modalConfirmar.addEventListener('click', () => {
-        if (puntoIdAEliminar) {
-            // TODO: Cuando el backend esté listo, PuntosService.eliminar() hará un DELETE al API
-            const eliminado = PuntosService.eliminar(puntoIdAEliminar);
-            if (eliminado) {
-                mostrarToast('Punto eliminado correctamente.', 'success');
+    modalConfirmar.addEventListener('click', async () => {
+        if (puntoIdAEliminar !== null) {
+            const resultado = await PuntosService.eliminar(puntoIdAEliminar);
+            if (resultado.error) {
+                mostrarToast(`Error: ${resultado.error}`, 'error');
             } else {
-                mostrarToast('Error al eliminar el punto.', 'error');
+                mostrarToast('Punto eliminado correctamente.', 'success');
             }
-            renderizarTabla();
+            await renderizarTabla();
         }
         modalOverlay.classList.remove('visible');
         puntoIdAEliminar = null;
@@ -266,27 +310,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ========== UTILIDADES ==========
     function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = String(text);
         return div.innerHTML;
     }
 
     // ========== LIMPIAR ERRORES EN TIEMPO REAL ==========
-    Object.values(campos).forEach(input => {
+    Object.entries(campos).forEach(([key, input]) => {
         if (input) {
             input.addEventListener('input', () => {
                 input.classList.remove('error');
-                const errorEl = input.closest('.form-group')?.querySelector('.error-msg');
+                const errorEl = document.getElementById(`error-${key}`);
                 if (errorEl) errorEl.classList.remove('visible');
             });
         }
-    });
-
-    // Limpiar error de materiales al seleccionar alguno
-    document.querySelectorAll('input[name="tipoMaterial"]').forEach(cb => {
-        cb.addEventListener('change', () => {
-            limpiarError('material');
-        });
     });
 
     // ========== INICIALIZACIÓN ==========

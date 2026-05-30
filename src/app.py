@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from routes.routes_usuarios import router as usuarios_router
 from routes.routes_camion import router as camion_router
 from routes.routes_punto import router as punto_router
@@ -6,11 +8,21 @@ from routes.routes_ruta import router as ruta_router
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # ========== RUTAS ==========
 app.include_router(usuarios_router)
 app.include_router(camion_router)
 app.include_router(punto_router)
 app.include_router(ruta_router)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 def root():

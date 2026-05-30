@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from models.punto import PuntoRecicljeCrear, PuntoRecicljeActualizar
 from services.services_punto import (
+    services_listar_puntos,
     services_crear_punto,
     services_leer_punto,
     services_actualizar_punto,
@@ -15,6 +16,11 @@ def crear_punto(punto: PuntoRecicljeCrear):
     return services_crear_punto(punto.municipalidad, punto.latitud, punto.longitud,
                                punto.estado, punto.urgencia, punto.capacidad_maxima,
                                punto.capacidad_ocupada)
+
+
+@router.get("/obtener")
+def listar_puntos():
+    return services_listar_puntos()
 
 
 @router.get("/obtener/{punto_id}")

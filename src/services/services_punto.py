@@ -21,6 +21,17 @@ def _obtener_proximo_id(seccion: str) -> int:
     return 1
 
 
+def services_listar_puntos():
+    """Lista todos los puntos de reciclaje"""
+    try:
+        _inicializar_data_json()
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+        return {"puntos": data.get("puntos", [])}
+    except Exception as e:
+        return {"error": f"Error al listar puntos: {str(e)}"}
+
+
 def services_crear_punto(municipalidad: str, latitud: float, longitud: float, estado: str = "Activo", 
                         urgencia: str = "Normal", capacidad_maxima: float = 0, capacidad_ocupada: float = 0):
     """Crea un nuevo punto de reciclaje"""
