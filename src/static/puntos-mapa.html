@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Puntos de Reciclaje - RedCicla Admin</title>
+    <meta name="description" content="Visualización de puntos de reciclaje en el mapa del panel de administración de RedCicla.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/puntos-mapa.css">
+</head>
+
+<body class="admin-layout">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="admin-sidebar">
+        <a href="#" class="sidebar-logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            Admin Panel
+        </a>
+        <nav class="sidebar-nav">
+            <a href="#">Dashboard Global</a>
+            <a href="#" class="active">Usuarios &amp; Puntos</a>
+            <a href="#">Rutas de Recolección</a>
+            <a href="#">Vehículos &amp; Personal</a>
+            <a href="#">Informes</a>
+        </nav>
+    </aside>
+
+    <!-- ========== CONTENIDO PRINCIPAL ========== -->
+    <main class="admin-main">
+
+        <!-- Header -->
+        <header class="admin-header">
+            <h1>Mapa de Puntos de Reciclaje</h1>
+            <div class="header-user">
+                <span>Elena P. (Administrador)</span>
+                <button class="btn-salir" id="btn-salir">Salir</button>
+            </div>
+        </header>
+
+        <!-- Contenido -->
+        <div class="admin-content">
+
+            <!-- ===== PANEL IZQUIERDO: LISTA DE PUNTOS ===== -->
+            <div class="mapa-panel-lista">
+                <div class="panel-lista-header">
+                    <h2>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Puntos de Reciclaje
+                    </h2>
+
+                    <!-- Buscador -->
+                    <div class="buscar-wrapper">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" class="buscar-input" id="buscar-punto"
+                            placeholder="Buscar punto por nombre...">
+                    </div>
+
+                    <!-- Filtros rápidos -->
+                    <div class="filtros-rapidos">
+                        <button class="filtro-btn active" data-filtro="todos" id="filtro-todos">Todos</button>
+                        <button class="filtro-btn" data-filtro="activo" id="filtro-activos">Activos</button>
+                        <button class="filtro-btn" data-filtro="inactivo" id="filtro-inactivos">Inactivos</button>
+                    </div>
+                </div>
+
+                <!-- Lista de puntos -->
+                <div class="puntos-lista" id="puntos-lista">
+                    <!-- Se renderiza dinámicamente -->
+                </div>
+
+                <!-- Contador -->
+                <div class="lista-counter" id="lista-counter">
+                    0 puntos encontrados
+                </div>
+            </div>
+
+            <!-- ===== PANEL PRINCIPAL: MAPA ===== -->
+            <div class="mapa-panel-mapa">
+                <!-- El mapa de Google Maps se renderiza aquí -->
+                <div id="mapa-google">
+                    <!-- Placeholder visible mientras no haya API key -->
+                    <div class="mapa-placeholder" id="mapa-placeholder">
+                        <div class="mapa-placeholder-content">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
+                                </path>
+                            </svg>
+                            <p class="mapa-title">Google Maps API</p>
+                            <p class="mapa-subtitle">Configurar API key para visualizar el mapa interactivo</p>
+                            <p class="mapa-subtitle" style="margin-top: 0.75rem; font-size: 0.75rem;">
+                                Los puntos de reciclaje registrados se mostrarán como marcadores en el mapa.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ========== CONTENEDOR TOASTS ========== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ========== SCRIPTS ========== -->
+
+    <!--
+        Google Maps API:
+        Reemplazar YOUR_API_KEY con la clave real de Google Maps.
+        Para obtener una: https://console.cloud.google.com/google/maps-apis
+        Habilitar: Maps JavaScript API
+    -->
+    <script>
+        // Configuración de la API key de Google Maps
+        // TODO: Reemplazar con la API key real del proyecto
+        const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY';
+
+        // Cargar Google Maps dinámicamente solo si hay API key válida
+        if (GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY !== 'YOUR_API_KEY') {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initMap`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+    </script>
+    <script src="js/puntos-service.js"></script>
+    <script src="js/puntos-mapa.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,328 @@
+/* ============================================================
+   RedCicla — Estilos Mapa de Puntos (puntos-mapa.css)
+   Pantalla HU-04: Visualizar puntos del mapa
+   ============================================================ */
+
+/* ========== PANEL LATERAL DE PUNTOS ========== */
+.mapa-panel-lista {
+    width: 22rem;
+    min-width: 22rem;
+    background: #fff;
+    border-radius: var(--rc-radius-xl);
+    box-shadow: var(--rc-shadow-sm);
+    border: 1px solid var(--rc-gray-200);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-lista-header {
+    padding: 1.25rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--rc-gray-100);
+}
+
+.panel-lista-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem 0;
+    color: var(--rc-gray-900);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.panel-lista-header h2 svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--rc-green-600);
+}
+
+/* ---------- BUSCADOR ---------- */
+.buscar-wrapper {
+    position: relative;
+    margin-bottom: 0.75rem;
+}
+
+.buscar-wrapper svg {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    color: var(--rc-gray-400);
+    pointer-events: none;
+}
+
+.buscar-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+    font-size: 0.8125rem;
+    border: 1px solid var(--rc-gray-200);
+    border-radius: var(--rc-radius-lg);
+    background: var(--rc-gray-50);
+    outline: none;
+    transition: border-color var(--rc-transition), box-shadow var(--rc-transition);
+}
+
+.buscar-input:focus {
+    border-color: var(--rc-green-500);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+    background: #fff;
+}
+
+/* ---------- FILTROS RÁPIDOS ---------- */
+.filtros-rapidos {
+    display: flex;
+    gap: 0.375rem;
+    margin-bottom: 0.5rem;
+}
+
+.filtro-btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--rc-gray-200);
+    border-radius: 9999px;
+    background: #fff;
+    color: var(--rc-gray-600);
+    cursor: pointer;
+    transition: all var(--rc-transition);
+    white-space: nowrap;
+}
+
+.filtro-btn:hover {
+    background: var(--rc-gray-50);
+}
+
+.filtro-btn.active {
+    background: var(--rc-green-600);
+    color: #fff;
+    border-color: var(--rc-green-600);
+}
+
+/* ---------- LISTA DE PUNTOS ---------- */
+.puntos-lista {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.punto-card {
+    padding: 0.875rem;
+    border: 1px solid var(--rc-gray-200);
+    border-radius: var(--rc-radius-lg);
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all var(--rc-transition);
+}
+
+.punto-card:hover {
+    border-color: var(--rc-green-300);
+    background: var(--rc-green-50);
+    box-shadow: var(--rc-shadow-sm);
+}
+
+.punto-card.selected {
+    border-color: var(--rc-green-500);
+    background: var(--rc-green-50);
+    box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
+}
+
+.punto-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.375rem;
+}
+
+.punto-card-nombre {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--rc-gray-800);
+    margin: 0;
+}
+
+.punto-card-direccion {
+    font-size: 0.75rem;
+    color: var(--rc-gray-500);
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.punto-card-direccion svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+}
+
+.punto-card-materiales {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.punto-card-horario {
+    font-size: 0.6875rem;
+    color: var(--rc-gray-400);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.punto-card-horario svg {
+    width: 0.75rem;
+    height: 0.75rem;
+}
+
+/* ---------- CONTADOR ---------- */
+.lista-counter {
+    padding: 0.5rem 1.25rem;
+    border-top: 1px solid var(--rc-gray-100);
+    font-size: 0.75rem;
+    color: var(--rc-gray-500);
+    text-align: center;
+    background: var(--rc-gray-50);
+}
+
+/* ========== PANEL DEL MAPA ========== */
+.mapa-panel-mapa {
+    flex: 1;
+    border-radius: var(--rc-radius-xl);
+    box-shadow: var(--rc-shadow-sm);
+    border: 1px solid var(--rc-gray-200);
+    overflow: hidden;
+    position: relative;
+    min-height: 400px;
+}
+
+/* Contenedor del mapa de Google */
+#mapa-google {
+    width: 100%;
+    height: 100%;
+}
+
+/* ========== PLACEHOLDER DEL MAPA ========== */
+.mapa-placeholder {
+    width: 100%;
+    height: 100%;
+    background: var(--rc-gray-200);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.mapa-placeholder::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+}
+
+.mapa-placeholder-content {
+    text-align: center;
+    z-index: 1;
+}
+
+.mapa-placeholder-content svg {
+    width: 4rem;
+    height: 4rem;
+    color: var(--rc-gray-400);
+    margin-bottom: 0.75rem;
+}
+
+.mapa-placeholder-content p {
+    margin: 0.25rem 0;
+}
+
+.mapa-placeholder-content .mapa-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--rc-gray-500);
+}
+
+.mapa-placeholder-content .mapa-subtitle {
+    font-size: 0.875rem;
+    color: var(--rc-gray-400);
+}
+
+/* ========== INFO WINDOW CUSTOM GOOGLE MAPS ========== */
+.gm-info-window {
+    font-family: 'Inter', sans-serif;
+    padding: 0.25rem;
+    max-width: 250px;
+}
+
+.gm-info-window h3 {
+    margin: 0 0 0.375rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--rc-gray-900);
+}
+
+.gm-info-window p {
+    margin: 0 0 0.25rem;
+    font-size: 0.8125rem;
+    color: var(--rc-gray-600);
+}
+
+.gm-info-window .info-materiales {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+/* ========== ESTADO VACÍO LISTA ========== */
+.lista-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--rc-gray-400);
+}
+
+.lista-empty svg {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+
+.lista-empty p {
+    font-size: 0.8125rem;
+    margin: 0;
+}
+
+/* ========== BOTÓN VER MAPA (enlace desde registro) ========== */
+.btn-ver-mapa {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    padding: 0.375rem 0.75rem;
+    color: var(--rc-green-600);
+    border: 1px solid var(--rc-green-200);
+    border-radius: var(--rc-radius);
+    background: var(--rc-green-50);
+    text-decoration: none;
+    transition: all var(--rc-transition);
+}
+
+.btn-ver-mapa:hover {
+    background: var(--rc-green-100);
+    border-color: var(--rc-green-300);
+}
+
+.btn-ver-mapa svg {
+    width: 0.875rem;
+    height: 0.875rem;
+}
