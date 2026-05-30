@@ -1,11 +1,15 @@
 import json
 import os
+from pathlib import Path
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
 # Inicializar hasher de contraseñas
 ph = PasswordHasher()
-DATA_FILE = "data/data.json"
+
+# Path absoluto al archivo data.json dentro de src/data
+BASE_DIR = Path(__file__).resolve().parents[1]
+DATA_FILE = str(BASE_DIR / 'data' / 'data.json')
 
 
 def _inicializar_data_json():

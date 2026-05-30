@@ -210,6 +210,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const puntos = obtenerPuntosFiltrados();
         actualizarMarcadores(puntos);
 
+        // Creación de puntos desactivada (click en marcadores para editar existentes)
+        // habilitarCreacionClick();
+
         mostrarToast('Mapa cargado correctamente.', 'success');
     };
 
@@ -250,29 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Info Window al hacer clic en marcador
             marker.addListener('click', () => {
-                const content = `
-                    <div class="gm-info-window">
-                        <h3>${escapeHtml(punto.municipalidad)}</h3>
-                        <p>📍 ${punto.latitud.toFixed(4)}, ${punto.longitud.toFixed(4)}</p>
-                        <p>📊 Estado: ${escapeHtml(punto.estado)} | Urgencia: ${escapeHtml(punto.urgencia)}</p>
-                        <p>📦 Capacidad: ${punto.capacidad_ocupada}/${punto.capacidad_maxima} kg (${porcCapacidad}%)</p>
-                    </div>
-                `;
-
-                infoWindow.setContent(content);
-                infoWindow.open(map, marker);
-
-                // Seleccionar en la lista lateral
-                puntoSeleccionado = punto.id;
-                document.querySelectorAll('.punto-card').forEach(c => {
-                    c.classList.toggle('selected', parseInt(c.dataset.id) === punto.id);
-                });
-
-                // Scroll al punto en la lista
-                const cardEl = document.querySelector(`.punto-card[data-id="${punto.id}"]`);
-                if (cardEl) {
-                    cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
+                // Abrir info window con vista y opciones de editar
+                abrirEditorPunto(punto, marker, false);
             });
 
             marker._puntoId = punto.id;
@@ -287,6 +269,233 @@ document.addEventListener('DOMContentLoaded', () => {
                 map.fitBounds(bounds, { padding: 50 });
             }
         }
+    }
+
+    // ========== EDICIÓN / CREACIÓN DE PUNTOS ==========
+
+    /**
+     * Abre un editor dentro de un InfoWindow. Si isNew=true, el punto aún no existe en el backend.
+     */
+    function abrirEditorPunto(punto, marker, isNew = false) {
+        const container = document.createElement('div');
+        container.className = 'gm-editor';
+        container.style.cssText = `
+            width: 320px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+            font-size: 13px;
+        `;
+
+        container.innerHTML = `
+            <div style="padding: 12px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <!-- Header -->
+                <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #e5e7eb;">
+                    <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
+                        ${isNew ? '➕ Nuevo Punto' : '📍 Editar Punto'}
+                    </h3>
+                    <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                        ${isNew ? 'Completa los datos para crear' : 'Modifica los datos y guarda'}
+                    </p>
+                </div>
+
+                <!-- Formulario -->
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Nombre -->
+                    <label style="display: flex; flex-direction: column; gap: 4px; color: #374151;">
+                        <span style="font-weight: 500; font-size: 12px;">📛 Nombre</span>
+                        <input id="gm-municipalidad" type="text" placeholder="Ej: Centro de Reciclaje" 
+                            value="${escapeHtml(punto.municipalidad || '')}"
+                            style="padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px;">
+                    </label>
+
+                    <!-- Coordenadas -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <label style="display: flex; flex-direction: column; gap: 4px; color: #374151;">
+                            <span style="font-weight: 500; font-size: 12px;">🧭 Lat</span>
+                            <input id="gm-lat" type="number" step="0.000001" value="${punto.latitud || ''}"
+                                style="padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;">
+                        </label>
+                        <label style="display: flex; flex-direction: column; gap: 4px; color: #374151;">
+                            <span style="font-weight: 500; font-size: 12px;">🧭 Lng</span>
+                            <input id="gm-lng" type="number" step="0.000001" value="${punto.longitud || ''}"
+                                style="padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;">
+                        </label>
+                    </div>
+
+                    <!-- Estado -->
+                    <label style="display: flex; flex-direction: column; gap: 4px; color: #374151;">
+                        <span style="font-weight: 500; font-size: 12px;">✅ Estado</span>
+                        <select id="gm-estado" style="padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px; cursor: pointer;">
+                            <option value="Activo">Activo</option>
+                            <option value="Inactivo">Inactivo</option>
+                            <option value="Mantencion">Mantencion</option>
+                        </select>
+                    </label>
+
+                    <!-- Urgencia -->
+                    <label style="display: flex; flex-direction: column; gap: 4px; color: #374151;">
+                        <span style="font-weight: 500; font-size: 12px;">⚠️ Urgencia</span>
+                        <select id="gm-urgencia" style="padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px; cursor: pointer;">
+                            <option value="Baja">Baja</option>
+                            <option value="Normal">Normal</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Crítica">Crítica</option>
+                        </select>
+                    </label>
+
+                    <!-- Capacidad -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <label style="display: flex; flex-direction: column; gap: 4px; color: #374151;">
+                            <span style="font-weight: 500; font-size: 12px;">📦 Máx (kg)</span>
+                            <input id="gm-cap-max" type="number" step="0.1" value="${punto.capacidad_maxima || 0}"
+                                style="padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;">
+                        </label>
+                        <label style="display: flex; flex-direction: column; gap: 4px; color: #374151;">
+                            <span style="font-weight: 500; font-size: 12px;">📊 Actual (kg)</span>
+                            <input id="gm-cap-act" type="number" step="0.1" value="${punto.capacidad_ocupada || 0}"
+                                style="padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #e5e7eb; display: flex; gap: 8px;">
+                    <button id="gm-save" style="flex: 1; padding: 8px 12px; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: 500; cursor: pointer; font-size: 12px; transition: background 0.2s;">
+                        💾 Guardar
+                    </button>
+                    ${isNew ? `
+                        <button id="gm-cancel" style="flex: 1; padding: 8px 12px; background: #9ca3af; color: white; border: none; border-radius: 4px; font-weight: 500; cursor: pointer; font-size: 12px; transition: background 0.2s;">
+                            ❌ Cancelar
+                        </button>
+                    ` : `
+                        <button id="gm-delete" style="flex: 1; padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; font-weight: 500; cursor: pointer; font-size: 12px; transition: background 0.2s;">
+                            🗑️ Eliminar
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+
+        // Ajustar selects a los valores actuales
+        setTimeout(() => {
+            const selEstado = container.querySelector('#gm-estado');
+            const selUrg = container.querySelector('#gm-urgencia');
+            if (selEstado && punto.estado) selEstado.value = punto.estado;
+            if (selUrg && punto.urgencia) selUrg.value = punto.urgencia;
+
+            // Habilitar arrastre del marcador para actualizar coords
+            marker.setDraggable(true);
+            marker.addListener('dragend', () => {
+                const pos = marker.getPosition();
+                container.querySelector('#gm-lat').value = pos.lat().toFixed(6);
+                container.querySelector('#gm-lng').value = pos.lng().toFixed(6);
+            });
+
+            // Botones con efectos hover
+            const btnSave = container.querySelector('#gm-save');
+            const btnDelete = container.querySelector('#gm-delete');
+            const btnCancel = container.querySelector('#gm-cancel');
+
+            if (btnSave) {
+                btnSave.addEventListener('mouseenter', () => btnSave.style.background = '#059669');
+                btnSave.addEventListener('mouseleave', () => btnSave.style.background = '#10b981');
+            }
+            if (btnDelete) {
+                btnDelete.addEventListener('mouseenter', () => btnDelete.style.background = '#dc2626');
+                btnDelete.addEventListener('mouseleave', () => btnDelete.style.background = '#ef4444');
+            }
+            if (btnCancel) {
+                btnCancel.addEventListener('mouseenter', () => btnCancel.style.background = '#6b7280');
+                btnCancel.addEventListener('mouseleave', () => btnCancel.style.background = '#9ca3af');
+            }
+
+            // Guardar
+            container.querySelector('#gm-save').addEventListener('click', async () => {
+                const datos = {
+                    municipalidad: container.querySelector('#gm-municipalidad').value.trim(),
+                    latitud: parseFloat(container.querySelector('#gm-lat').value),
+                    longitud: parseFloat(container.querySelector('#gm-lng').value),
+                    estado: container.querySelector('#gm-estado').value,
+                    urgencia: container.querySelector('#gm-urgencia').value,
+                    capacidad_maxima: parseFloat(container.querySelector('#gm-cap-max').value) || 0,
+                    capacidad_ocupada: parseFloat(container.querySelector('#gm-cap-act').value) || 0,
+                };
+
+                if (isNew) {
+                    const res = await PuntosService.guardar(datos);
+                    if (res.error) {
+                        mostrarToast(res.error, 'error');
+                    } else {
+                        mostrarToast(res.mensaje || 'Punto creado', 'success');
+                        await cargarPuntos();
+                        renderizarLista();
+                    }
+                } else {
+                    const res = await PuntosService.actualizar(punto.id, datos);
+                    if (res.error) {
+                        mostrarToast(res.error, 'error');
+                    } else {
+                        mostrarToast(res.mensaje || 'Punto actualizado', 'success');
+                        await cargarPuntos();
+                        renderizarLista();
+                    }
+                }
+                infoWindow.close();
+            });
+
+            // Eliminar o cancelar
+            if (isNew) {
+                container.querySelector('#gm-cancel').addEventListener('click', () => {
+                    marker.setMap(null);
+                    infoWindow.close();
+                });
+            } else {
+                container.querySelector('#gm-delete').addEventListener('click', async () => {
+                    if (!confirm('Eliminar punto? Esta acción no se puede deshacer.')) return;
+                    const res = await PuntosService.eliminar(punto.id);
+                    if (res.error) {
+                        mostrarToast(res.error, 'error');
+                    } else {
+                        mostrarToast(res.mensaje || 'Punto eliminado', 'success');
+                        await cargarPuntos();
+                        renderizarLista();
+                    }
+                    infoWindow.close();
+                });
+            }
+        }, 50);
+
+        infoWindow.setContent(container);
+        infoWindow.open(map, marker);
+    }
+
+    // Crear marcador temporal al hacer click en el mapa para registrar un nuevo punto
+    function habilitarCreacionClick() {
+        if (!map) return;
+        map.addListener('click', (e) => {
+            const pos = e.latLng;
+            const puntoTemp = {
+                municipalidad: '',
+                latitud: parseFloat(pos.lat().toFixed(6)),
+                longitud: parseFloat(pos.lng().toFixed(6)),
+                estado: 'Activo',
+                urgencia: 'Normal',
+                capacidad_maxima: 0,
+                capacidad_ocupada: 0,
+            };
+
+            const marker = new google.maps.Marker({
+                position: pos,
+                map: map,
+                draggable: true,
+                title: 'Nuevo punto (arrastra para ajustar)',
+                icon: {
+                    url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                    scaledSize: new google.maps.Size(40, 40)
+                }
+            });
+
+            abrirEditorPunto(puntoTemp, marker, true);
+        });
     }
 
     /**

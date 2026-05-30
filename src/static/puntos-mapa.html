@@ -6,7 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Puntos de Reciclaje - RedCicla Admin</title>
     <meta name="description" content="Visualización de puntos de reciclaje en el mapa del panel de administración de RedCicla.">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        (function () {
+            const host = window.location.hostname;
+            // Load Tailwind CDN during local development only
+            if (host === '127.0.0.1' || host === 'localhost') {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.tailwindcss.com';
+                s.defer = true;
+                document.head.appendChild(s);
+            } else {
+                // In production, prefer a compiled Tailwind CSS file included in static/css
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '/static/css/tailwind.css';
+                document.head.appendChild(link);
+                console.warn('Tailwind CDN not loaded in production. Build Tailwind and include static/css/tailwind.css');
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/puntos-mapa.css">
 </head>
@@ -128,18 +146,45 @@
         Habilitar: Maps JavaScript API
     -->
     <script>
-        // Configuración de la API key de Google Maps
-        // TODO: Reemplazar con la API key real del proyecto
-        const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY';
+        // Cargar la API key desde el backend (/config) y luego cargar Google Maps dinámicamente
+        (async () => {
+            try {
+                const res = await fetch('/config');
+                if (!res.ok) throw new Error('No se pudo obtener la configuración');
+                const cfg = await res.json();
+                const key = cfg.google_maps_api_key;
+                const keyValid = cfg.google_maps_api_key_valid;
 
-        // Cargar Google Maps dinámicamente solo si hay API key válida
-        if (GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY !== 'YOUR_API_KEY') {
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initMap`;
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
-        }
+                if (!key) {
+                    console.warn('Google Maps API key no configurada en el servidor.');
+                    const ph = document.getElementById('mapa-placeholder');
+                    if (ph) ph.querySelector('.mapa-subtitle').textContent = 'Google Maps API key no configurada en el servidor.';
+                    return;
+                }
+
+                if (!keyValid) {
+                    console.warn('Google Maps API key inválida (formato). No se cargará Google Maps.');
+                    const ph = document.getElementById('mapa-placeholder');
+                    if (ph) {
+                        ph.innerHTML = `
+                            <div class="mapa-placeholder-content">
+                                <p style="color:#c00">Google Maps API key inválida. Genera una key válida en Google Cloud Console (comienza con "AIza").</p>
+                                <p style="margin-top:8px; font-size:0.85rem">Si usas el plan gratuito, limita las llamadas a Geocoding y evita peticiones repetidas.</p>
+                            </div>
+                        `;
+                    }
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initMap`;
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            } catch (err) {
+                console.error('Error cargando configuración:', err);
+            }
+        })();
     </script>
     <script src="js/puntos-service.js"></script>
     <script src="js/puntos-mapa.js"></script>

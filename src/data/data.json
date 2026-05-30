@@ -11,6 +11,67 @@
         }
     ],
     "camiones": [],
-    "puntos": [],
+    "puntos": [
+        {
+            "id": 1,
+            "municipalidad": "Centro de Reciclaje - Plaza de Armas",
+            "latitud": -35.0025173,
+            "longitud": -71.2294064,
+            "estado": "Activo",
+            "urgencia": "Normal",
+            "capacidad_maxima": 500,
+            "capacidad_ocupada": 350
+        },
+        {
+            "id": 2,
+            "municipalidad": "Punto Ecol\u00f3gico - Barrio Sur",
+            "latitud": -35.0105,
+            "longitud": -71.238,
+            "estado": "Activo",
+            "urgencia": "Cr\u00edtica",
+            "capacidad_maxima": 300.0,
+            "capacidad_ocupada": 120.0
+        },
+        {
+            "id": 3,
+            "municipalidad": "Estaci\u00f3n de Reciclaje - Campus UTAL",
+            "latitud": -35.018,
+            "longitud": -71.22,
+            "estado": "Activo",
+            "urgencia": "Cr\u00edtica",
+            "capacidad_maxima": 800.0,
+            "capacidad_ocupada": 650.0
+        },
+        {
+            "id": 4,
+            "municipalidad": "Punto de Acopio - Sector Industrial",
+            "latitud": -34.995,
+            "longitud": -71.245,
+            "estado": "Inactivo",
+            "urgencia": "Normal",
+            "capacidad_maxima": 400,
+            "capacidad_ocupada": 0
+        },
+        {
+            "id": 5,
+            "municipalidad": "Centro Verde - Barrio Norte",
+            "latitud": -35.022,
+            "longitud": -71.225,
+            "estado": "Activo",
+            "urgencia": "Normal",
+            "capacidad_maxima": 600.0,
+            "capacidad_ocupada": 200.0
+        },
+        {
+            "id": 6,
+            "municipalidad": "Ecoestaci\u00f3n - Cerro Condell",
+            "latitud": -35.014,
+            "longitud": -71.21,
+            "estado": "Inactivo",
+            "urgencia": "Baja",
+            "capacidad_maxima": 350.0,
+            "capacidad_ocupada": 0.0
+        }
+    ],
     "rutas": []
 }
