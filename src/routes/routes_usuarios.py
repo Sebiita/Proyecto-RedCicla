@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from models.usuario import UsuarioCrear, UsuarioLogin, UsuarioEliminar, UsuarioActualizar
 from services.services_usuario import (
     services_crear_usuario,
+    services_leer_todos_usuarios,
     services_leer_usuario,
     services_actualizar_usuario,
     services_inicio_de_sesion,
@@ -15,6 +16,11 @@ router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 def rourtes_crear_usuario(usuario: UsuarioCrear):
     return services_crear_usuario(usuario.nombre, usuario.apellido, usuario.correo, 
                                  usuario.rol, usuario.contraseña, usuario.estado)
+
+
+@router.get("/obtener")
+def routes_leer_todos_usuarios():
+    return services_leer_todos_usuarios()
 
 
 @router.get("/obtener/{correo}")

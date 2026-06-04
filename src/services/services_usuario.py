@@ -80,6 +80,30 @@ def services_crear_usuario(nombre: str, apellido: str, correo: str, rol: str, co
         return {"error": f"Error al crear usuario: {str(e)}"}
 
 
+def services_leer_todos_usuarios():
+    """Lee todos los usuarios (sin mostrar contraseñas)"""
+    try:
+        _inicializar_data_json()
+        
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+        
+        usuarios_sin_password = []
+        for usuario in data.get("usuarios", []):
+            usuarios_sin_password.append({
+                "id": usuario.get("id"),
+                "nombre": usuario["nombre"],
+                "apellido": usuario.get("apellido", ""),
+                "correo": usuario["correo"],
+                "rol": usuario.get("rol", ""),
+                "estado": usuario.get("estado", "Activo")
+            })
+        
+        return {"usuarios": usuarios_sin_password}
+    except Exception as e:
+        return {"error": f"Error al leer usuarios: {str(e)}"}
+
+
 def services_leer_usuario(correo: str):
     """Lee un usuario por correo (sin mostrar contraseña)"""
     try:

@@ -49,6 +49,19 @@ def services_crear_camion(patente: str, capacidad: float, estado_mantencion: str
         return {"error": f"Error al crear camión: {str(e)}"}
 
 
+def services_leer_todos_camiones():
+    """Lee todos los camiones"""
+    try:
+        _inicializar_data_json()
+        
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+        
+        return {"camiones": data.get("camiones", [])}
+    except Exception as e:
+        return {"error": f"Error al leer camiones: {str(e)}"}
+
+
 def services_leer_camion(patente: str):
     """Lee un camión por patente"""
     try:
