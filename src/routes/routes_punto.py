@@ -24,17 +24,17 @@ def listar_puntos():
 
 
 @router.get("/obtener/{punto_id}")
-def leer_punto(punto_id: int):
+def leer_punto(punto_id: str):
     return services_leer_punto(punto_id)
 
 
 @router.put("/actualizar/{punto_id}")
-def actualizar_punto(punto_id: int, punto: PuntoRecicljeActualizar):
+def actualizar_punto(punto_id: str, punto: PuntoRecicljeActualizar):
     return services_actualizar_punto(punto_id, punto.municipalidad, punto.latitud,
                                     punto.longitud, punto.estado, punto.urgencia,
                                     punto.capacidad_maxima, punto.capacidad_ocupada)
 
 
 @router.delete("/eliminar/{punto_id}")
-def eliminar_punto(punto_id: int):
+def eliminar_punto(punto_id: str):
     return services_eliminar_punto(punto_id)

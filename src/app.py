@@ -6,6 +6,10 @@ from routes.routes_camion import router as camion_router
 from routes.routes_punto import router as punto_router
 from routes.routes_ruta import router as ruta_router
 
+# ========== INICIALIZACIÓN FIREBASE ==========
+# Importar para inicializar la conexión a Firestore
+from data.database import db
+
 app = FastAPI()
 
 app.add_middleware(
