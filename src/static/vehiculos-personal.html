@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehículos & Personal - RedCicla Admin</title>
+    <meta name="description" content="Módulo de gestión de vehículos y personal operativo del panel de administración de RedCicla.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/vehiculos-personal.css">
+</head>
+
+<body class="admin-layout">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="admin-sidebar">
+        <a href="landing.html" class="sidebar-logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            Admin Panel
+        </a>
+        <nav class="sidebar-nav">
+            <a href="#">Dashboard Global</a>
+            <a href="puntos-mapa.html">Mapa de Puntos</a>
+            <a href="puntos-registro.html">Registrar Puntos</a>
+            <a href="#">Rutas de Recolección</a>
+            <a href="vehiculos-personal.html" class="active">Vehículos &amp; Personal</a>
+            <a href="#">Informes</a>
+        </nav>
+    </aside>
+
+    <!-- ========== CONTENIDO PRINCIPAL ========== -->
+    <main class="admin-main">
+
+        <!-- Header -->
+        <header class="admin-header">
+            <h1>Vehículos & Personal</h1>
+            <div class="header-user">
+                <span>...</span>
+                <button class="btn-salir" id="btn-salir">Salir</button>
+            </div>
+        </header>
+
+        <!-- Contenido -->
+        <div class="admin-content vp-content">
+
+            <!-- ===== TABS ===== -->
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="vehiculos" id="tab-btn-vehiculos">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h-3m3 0h2m-2 0V6m0 0h4l3 5v5a1 1 0 01-1 1h-1"></path>
+                    </svg>
+                    Vehículos
+                </button>
+                <button class="tab-btn" data-tab="personal" id="tab-btn-personal">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                    Personal
+                </button>
+            </div>
+
+            <!-- ===== TAB: VEHÍCULOS ===== -->
+            <div class="tab-content active" id="tab-vehiculos">
+
+                <!-- Panel Formulario -->
+                <div class="vp-panel-form">
+                    <h2 class="form-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Registrar Vehículo
+                    </h2>
+
+                    <form id="form-camion" novalidate>
+                        <!-- Patente -->
+                        <div class="form-group">
+                            <label for="camion-patente">Patente *</label>
+                            <input type="text" id="camion-patente" name="patente"
+                                placeholder="Ej: ABCD-12" required maxlength="20">
+                            <div class="error-msg" id="error-patente">La patente es obligatoria.</div>
+                        </div>
+
+                        <!-- Capacidad y Estado -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="camion-capacidad">Capacidad (kg) *</label>
+                                <input type="number" id="camion-capacidad" name="capacidad"
+                                    step="any" min="0.1" placeholder="Ej: 5000" required>
+                                <div class="error-msg" id="error-capacidad">Capacidad debe ser mayor a 0.</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="camion-estado">Estado Mantención</label>
+                                <select id="camion-estado" name="estado_mantencion">
+                                    <option value="Operativo" selected>Operativo</option>
+                                    <option value="Mantencion">Mantención</option>
+                                    <option value="Fuera de servicio">Fuera de servicio</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Botón Submit -->
+                        <button type="submit" class="btn-registrar" id="btn-registrar-camion">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Registrar Vehículo
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Panel Tabla -->
+                <div class="vp-panel-table">
+                    <div class="table-header">
+                        <h2>Vehículos Registrados</h2>
+                        <span class="table-counter" id="contador-camiones">0 vehículos</span>
+                    </div>
+                    <div class="vp-table-wrapper" id="tabla-camiones">
+                        <!-- Tabla renderizada por JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: PERSONAL ===== -->
+            <div class="tab-content" id="tab-personal">
+
+                <!-- Panel Formulario -->
+                <div class="vp-panel-form">
+                    <h2 class="form-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Registrar Personal
+                    </h2>
+
+                    <form id="form-personal" novalidate>
+                        <!-- Nombre y Apellido -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="personal-nombre">Nombre *</label>
+                                <input type="text" id="personal-nombre" name="nombre"
+                                    placeholder="Ej: Carlos" required minlength="2" maxlength="100">
+                                <div class="error-msg" id="error-nombre">El nombre es obligatorio (mín. 2 caracteres).</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="personal-apellido">Apellido *</label>
+                                <input type="text" id="personal-apellido" name="apellido"
+                                    placeholder="Ej: Muñoz" required minlength="2" maxlength="100">
+                                <div class="error-msg" id="error-apellido">El apellido es obligatorio (mín. 2 caracteres).</div>
+                            </div>
+                        </div>
+
+                        <!-- Correo -->
+                        <div class="form-group">
+                            <label for="personal-correo">Correo Electrónico *</label>
+                            <input type="email" id="personal-correo" name="correo"
+                                placeholder="carlos.munoz@redcicla.cl" required>
+                            <div class="error-msg" id="error-correo">Ingrese un correo válido.</div>
+                        </div>
+
+                        <!-- Rol y Estado -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="personal-rol">Rol *</label>
+                                <select id="personal-rol" name="rol" required>
+                                    <option value="Chofer" selected>Chofer</option>
+                                    <option value="Ayudante">Ayudante</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="personal-estado">Estado</label>
+                                <select id="personal-estado" name="estado">
+                                    <option value="Activo" selected>Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="form-group">
+                            <label for="personal-password">Contraseña *</label>
+                            <input type="password" id="personal-password" name="contraseña"
+                                placeholder="Mínimo 6 caracteres" required minlength="6" maxlength="100">
+                            <div class="error-msg" id="error-password">La contraseña debe tener mínimo 6 caracteres.</div>
+                        </div>
+
+                        <!-- Botón Submit -->
+                        <button type="submit" class="btn-registrar" id="btn-registrar-personal">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Registrar Personal
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Panel Tabla -->
+                <div class="vp-panel-table">
+                    <div class="table-header">
+                        <h2>Personal Operativo</h2>
+                        <span class="table-counter" id="contador-personal">0 personas</span>
+                    </div>
+                    <div class="vp-table-wrapper" id="tabla-personal">
+                        <!-- Tabla renderizada por JS -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ========== MODAL CONFIRMACIÓN ELIMINAR ========== -->
+    <div class="modal-overlay" id="modal-eliminar">
+        <div class="modal-box">
+            <h3>¿Eliminar registro?</h3>
+            <p id="modal-nombre-item">Este registro será eliminado permanentemente.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="modal-cancelar">Cancelar</button>
+                <button class="btn-danger" id="modal-confirmar" style="padding: 0.625rem 1.25rem; font-size: 0.875rem;">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== CONTENEDOR TOASTS ========== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script src="js/vehiculos-personal-service.js"></script>
+    <script src="js/vehiculos-personal.js"></script>
+</body>
+
+</html>

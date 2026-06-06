@@ -9,6 +9,10 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+# ========== INICIALIZACIÓN FIREBASE ==========
+# Importar para inicializar la conexión a Firestore
+from data.database import db
+
 app = FastAPI()
 
 app.add_middleware(

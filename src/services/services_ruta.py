@@ -6,38 +6,16 @@ from pathlib import Path
 # Path absoluto al archivo data.json dentro de src/data
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_FILE = str(BASE_DIR / 'data' / 'data.json')
+=======
+from data.database import db, rutas_ref
+>>>>>>> main
 
 
-def _inicializar_data_json():
-    """Inicializa data.json si no existe"""
-    if not os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "w") as f:
-            json.dump({"usuarios": [], "camiones": [], "puntos": [], "rutas": []}, f, indent=4)
-
-
-def _obtener_proximo_id(seccion: str) -> int:
-    """Obtiene el próximo ID disponible para una sección"""
-    _inicializar_data_json()
-    with open(DATA_FILE, "r") as f:
-        data = json.load(f)
-    if data.get(seccion, []):
-        return max(item.get("id", 0) for item in data[seccion]) + 1
-    return 1
-
-
-def services_crear_ruta(fecha: str, camion_asignado: str, chofer_asignado: int, 
-                       ayudante_asignado: int, puntos: list, estado: str = "Pendiente"):
+def services_crear_ruta(fecha: str, camion_asignado: str, chofer_asignado: str, 
+                       ayudante_asignado: str, puntos: list, estado: str = "Pendiente"):
     """Crea una nueva ruta"""
     try:
-        _inicializar_data_json()
-        
-        proximo_id = _obtener_proximo_id("rutas")
-        
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
         nueva_ruta = {
-            "id": proximo_id,
             "fecha": fecha,
             "camion_asignado": camion_asignado,
             "chofer_asignado": chofer_asignado,
@@ -46,95 +24,93 @@ def services_crear_ruta(fecha: str, camion_asignado: str, chofer_asignado: int,
             "estado": estado
         }
         
-        data["rutas"].append(nueva_ruta)
-        
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        # Firestore genera automáticamente el ID
+        doc_ref = rutas_ref.document()
+        doc_ref.set(nueva_ruta)
         
         return {
             "mensaje": "Ruta creada correctamente",
-            "ruta": nueva_ruta
+            "ruta": {
+                **nueva_ruta,
+                "id": doc_ref.id
+            }
         }
     except Exception as e:
         return {"error": f"Error al crear ruta: {str(e)}"}
 
 
-def services_leer_ruta(ruta_id: int):
+def services_leer_ruta(ruta_id: str):
     """Lee una ruta por ID"""
     try:
-        _inicializar_data_json()
+        ruta = rutas_ref.document(ruta_id).get()
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
+        if not ruta.exists:
+            return {"error": "Ruta no encontrada"}
         
-        for ruta in data.get("rutas", []):
-            if ruta["id"] == ruta_id:
-                return {"ruta": ruta}
-        
-        return {"error": "Ruta no encontrada"}
+        ruta_data = ruta.to_dict()
+        ruta_data["id"] = ruta.id
+        return {"ruta": ruta_data}
     except Exception as e:
         return {"error": f"Error al leer ruta: {str(e)}"}
 
 
-def services_actualizar_ruta(ruta_id: int, fecha: str = None, camion_asignado: str = None,
-                            chofer_asignado: int = None, ayudante_asignado: int = None,
+def services_leer_todas_rutas():
+    """Lee todas las rutas"""
+    try:
+        rutas = []
+        docs = rutas_ref.stream()
+        
+        for doc in docs:
+            ruta_data = doc.to_dict()
+            ruta_data["id"] = doc.id
+            rutas.append(ruta_data)
+        
+        return {"rutas": rutas}
+    except Exception as e:
+        return {"error": f"Error al leer rutas: {str(e)}"}
+
+
+def services_actualizar_ruta(ruta_id: str, fecha: str = None, camion_asignado: str = None,
+                            chofer_asignado: str = None, ayudante_asignado: str = None,
                             puntos: list = None, estado: str = None):
     """Actualiza datos de una ruta"""
     try:
-        _inicializar_data_json()
+        ruta_ref = rutas_ref.document(ruta_id)
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
-        ruta_encontrada = False
-        for ruta in data.get("rutas", []):
-            if ruta["id"] == ruta_id:
-                if fecha:
-                    ruta["fecha"] = fecha
-                if camion_asignado:
-                    ruta["camion_asignado"] = camion_asignado
-                if chofer_asignado is not None:
-                    ruta["chofer_asignado"] = chofer_asignado
-                if ayudante_asignado is not None:
-                    ruta["ayudante_asignado"] = ayudante_asignado
-                if puntos is not None:
-                    ruta["puntos"] = puntos
-                if estado:
-                    ruta["estado"] = estado
-                ruta_encontrada = True
-                break
-        
-        if not ruta_encontrada:
+        if not ruta_ref.get().exists:
             return {"error": "Ruta no encontrada"}
         
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        actualizaciones = {}
+        if fecha:
+            actualizaciones["fecha"] = fecha
+        if camion_asignado:
+            actualizaciones["camion_asignado"] = camion_asignado
+        if chofer_asignado:
+            actualizaciones["chofer_asignado"] = chofer_asignado
+        if ayudante_asignado:
+            actualizaciones["ayudante_asignado"] = ayudante_asignado
+        if puntos is not None:
+            actualizaciones["puntos"] = puntos
+        if estado:
+            actualizaciones["estado"] = estado
+        
+        if actualizaciones:
+            ruta_ref.update(actualizaciones)
         
         return {"mensaje": "Ruta actualizada correctamente"}
     except Exception as e:
         return {"error": f"Error al actualizar ruta: {str(e)}"}
 
 
-def services_eliminar_ruta(ruta_id: int):
+def services_eliminar_ruta(ruta_id: str):
     """Elimina una ruta por ID"""
     try:
-        _inicializar_data_json()
+        ruta_ref = rutas_ref.document(ruta_id)
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
-        ruta_encontrada = False
-        for i, ruta in enumerate(data.get("rutas", [])):
-            if ruta["id"] == ruta_id:
-                del data["rutas"][i]
-                ruta_encontrada = True
-                break
-        
-        if not ruta_encontrada:
+        if not ruta_ref.get().exists:
             return {"error": "Ruta no encontrada"}
         
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        ruta_ref.delete()
         
         return {"mensaje": "Ruta eliminada correctamente"}
     except Exception as e:

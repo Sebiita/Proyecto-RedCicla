@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import json
 import os
 from pathlib import Path
@@ -12,26 +13,26 @@ def _inicializar_data_json():
     if not os.path.exists(DATA_FILE):
         with open(DATA_FILE, "w") as f:
             json.dump({"usuarios": [], "camiones": [], "puntos": [], "rutas": []}, f, indent=4)
+=======
+from data.database import db, camiones_ref
+>>>>>>> main
 
 
 def _camion_existe(patente: str) -> bool:
     """Verifica si un camión ya existe por patente"""
-    _inicializar_data_json()
-    with open(DATA_FILE, "r") as f:
-        data = json.load(f)
-    return any(camion["patente"] == patente for camion in data.get("camiones", []))
+    try:
+        camion = camiones_ref.document(patente).get()
+        return camion.exists
+    except Exception as e:
+        print(f"Error verificando si camión existe: {str(e)}")
+        return False
 
 
 def services_crear_camion(patente: str, capacidad: float, estado_mantencion: str = "Operativo"):
     """Crea un nuevo camión"""
     try:
-        _inicializar_data_json()
-        
         if _camion_existe(patente):
             return {"error": "El camión con esa patente ya existe"}
-        
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
         
         nuevo_camion = {
             "patente": patente,
@@ -39,10 +40,8 @@ def services_crear_camion(patente: str, capacidad: float, estado_mantencion: str
             "estado_mantencion": estado_mantencion
         }
         
-        data["camiones"].append(nuevo_camion)
-        
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        # Usar la patente como documento ID
+        camiones_ref.document(patente).set(nuevo_camion)
         
         return {
             "mensaje": "Camión creado correctamente",
@@ -52,19 +51,29 @@ def services_crear_camion(patente: str, capacidad: float, estado_mantencion: str
         return {"error": f"Error al crear camión: {str(e)}"}
 
 
+def services_leer_todos_camiones():
+    """Lee todos los camiones"""
+    try:
+        camiones = []
+        docs = camiones_ref.stream()
+        
+        for doc in docs:
+            camiones.append(doc.to_dict())
+        
+        return {"camiones": camiones}
+    except Exception as e:
+        return {"error": f"Error al leer camiones: {str(e)}"}
+
+
 def services_leer_camion(patente: str):
     """Lee un camión por patente"""
     try:
-        _inicializar_data_json()
+        camion = camiones_ref.document(patente).get()
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
+        if not camion.exists:
+            return {"error": "Camión no encontrado"}
         
-        for camion in data.get("camiones", []):
-            if camion["patente"] == patente:
-                return {"camion": camion}
-        
-        return {"error": "Camión no encontrado"}
+        return {"camion": camion.to_dict()}
     except Exception as e:
         return {"error": f"Error al leer camión: {str(e)}"}
 
@@ -72,26 +81,19 @@ def services_leer_camion(patente: str):
 def services_actualizar_camion(patente: str, capacidad: float = None, estado_mantencion: str = None):
     """Actualiza datos de un camión"""
     try:
-        _inicializar_data_json()
+        camion_ref = camiones_ref.document(patente)
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
-        camion_encontrado = False
-        for camion in data.get("camiones", []):
-            if camion["patente"] == patente:
-                if capacidad is not None:
-                    camion["capacidad"] = capacidad
-                if estado_mantencion:
-                    camion["estado_mantencion"] = estado_mantencion
-                camion_encontrado = True
-                break
-        
-        if not camion_encontrado:
+        if not camion_ref.get().exists:
             return {"error": "Camión no encontrado"}
         
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        actualizaciones = {}
+        if capacidad is not None:
+            actualizaciones["capacidad"] = capacidad
+        if estado_mantencion:
+            actualizaciones["estado_mantencion"] = estado_mantencion
+        
+        if actualizaciones:
+            camion_ref.update(actualizaciones)
         
         return {"mensaje": "Camión actualizado correctamente"}
     except Exception as e:
@@ -101,23 +103,12 @@ def services_actualizar_camion(patente: str, capacidad: float = None, estado_man
 def services_eliminar_camion(patente: str):
     """Elimina un camión por patente"""
     try:
-        _inicializar_data_json()
+        camion_ref = camiones_ref.document(patente)
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
-        camion_encontrado = False
-        for i, camion in enumerate(data.get("camiones", [])):
-            if camion["patente"] == patente:
-                del data["camiones"][i]
-                camion_encontrado = True
-                break
-        
-        if not camion_encontrado:
+        if not camion_ref.get().exists:
             return {"error": "Camión no encontrado"}
         
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        camion_ref.delete()
         
         return {"mensaje": "Camión eliminado correctamente"}
     except Exception as e:

@@ -10,6 +10,17 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ========== USUARIO AUTENTICADO ==========
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) {
+        window.location.href = 'login.html';
+        return;
+    }
+    const userSpan = document.querySelector('.header-user span');
+    if (userSpan) {
+        userSpan.textContent = `${currentUser.nombre} ${currentUser.apellido || ''} (${currentUser.rol || 'Usuario'})`.trim();
+    }
+
     // ========== ELEMENTOS DOM ==========
     const form = document.getElementById('form-registro-punto');
     const tablaContenedor = document.getElementById('tabla-contenedor');

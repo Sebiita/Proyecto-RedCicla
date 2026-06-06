@@ -1,11 +1,16 @@
+<<<<<<< HEAD
 import json
 import os
 from pathlib import Path
+=======
+>>>>>>> main
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
+from data.database import db, usuarios_ref
 
 # Inicializar hasher de contraseñas
 ph = PasswordHasher()
+<<<<<<< HEAD
 
 # Path absoluto al archivo data.json dentro de src/data
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -27,21 +32,23 @@ def _obtener_proximo_id(seccion: str) -> int:
     if data.get(seccion, []):
         return max(item.get("id", 0) for item in data[seccion]) + 1
     return 1
+=======
+>>>>>>> main
 
 
 def _usuario_existe(correo: str) -> bool:
     """Verifica si un usuario ya existe por correo"""
-    _inicializar_data_json()
-    with open(DATA_FILE, "r") as f:
-        data = json.load(f)
-    return any(usuario["correo"] == correo for usuario in data["usuarios"])
+    try:
+        usuario = usuarios_ref.document(correo).get()
+        return usuario.exists
+    except Exception as e:
+        print(f"Error verificando si usuario existe: {str(e)}")
+        return False
 
 
 def services_crear_usuario(nombre: str, apellido: str, correo: str, rol: str, contraseña: str, estado: str = "Activo"):
     """Crea un nuevo usuario con contraseña hasheada"""
     try:
-        _inicializar_data_json()
-        
         # Validar que el usuario no exista
         if _usuario_existe(correo):
             return {"error": "El correo ya está registrado"}
@@ -49,13 +56,7 @@ def services_crear_usuario(nombre: str, apellido: str, correo: str, rol: str, co
         # Hashear contraseña
         contraseña_hasheada = ph.hash(contraseña)
         
-        proximo_id = _obtener_proximo_id("usuarios")
-        
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
         nuevo_usuario = {
-            "id": proximo_id,
             "nombre": nombre,
             "apellido": apellido,
             "correo": correo,
@@ -64,15 +65,12 @@ def services_crear_usuario(nombre: str, apellido: str, correo: str, rol: str, co
             "estado": estado
         }
         
-        data["usuarios"].append(nuevo_usuario)
-        
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        # Usar el correo como documento ID
+        usuarios_ref.document(correo).set(nuevo_usuario)
         
         return {
             "mensaje": "Usuario creado correctamente",
             "usuario": {
-                "id": proximo_id,
                 "nombre": nombre,
                 "apellido": apellido,
                 "correo": correo,
@@ -84,28 +82,45 @@ def services_crear_usuario(nombre: str, apellido: str, correo: str, rol: str, co
         return {"error": f"Error al crear usuario: {str(e)}"}
 
 
+def services_leer_todos_usuarios():
+    """Lee todos los usuarios (sin mostrar contraseñas)"""
+    try:
+        usuarios_sin_password = []
+        docs = usuarios_ref.stream()
+        
+        for doc in docs:
+            usuario_data = doc.to_dict()
+            usuarios_sin_password.append({
+                "correo": usuario_data.get("correo"),
+                "nombre": usuario_data["nombre"],
+                "apellido": usuario_data.get("apellido", ""),
+                "rol": usuario_data.get("rol", ""),
+                "estado": usuario_data.get("estado", "Activo")
+            })
+        
+        return {"usuarios": usuarios_sin_password}
+    except Exception as e:
+        return {"error": f"Error al leer usuarios: {str(e)}"}
+
+
 def services_leer_usuario(correo: str):
     """Lee un usuario por correo (sin mostrar contraseña)"""
     try:
-        _inicializar_data_json()
+        usuario = usuarios_ref.document(correo).get()
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
+        if not usuario.exists:
+            return {"error": "Usuario no encontrado"}
         
-        for usuario in data["usuarios"]:
-            if usuario["correo"] == correo:
-                return {
-                    "usuario": {
-                        "id": usuario.get("id"),
-                        "nombre": usuario["nombre"],
-                        "apellido": usuario.get("apellido", ""),
-                        "correo": usuario["correo"],
-                        "rol": usuario.get("rol", ""),
-                        "estado": usuario.get("estado", "Activo")
-                    }
-                }
-        
-        return {"error": "Usuario no encontrado"}
+        usuario_data = usuario.to_dict()
+        return {
+            "usuario": {
+                "correo": usuario_data.get("correo"),
+                "nombre": usuario_data["nombre"],
+                "apellido": usuario_data.get("apellido", ""),
+                "rol": usuario_data.get("rol", ""),
+                "estado": usuario_data.get("estado", "Activo")
+            }
+        }
     except Exception as e:
         return {"error": f"Error al leer usuario: {str(e)}"}
 
@@ -113,30 +128,23 @@ def services_leer_usuario(correo: str):
 def services_actualizar_usuario(correo: str, nombre: str = None, apellido: str = None, rol: str = None, estado: str = None):
     """Actualiza datos de un usuario"""
     try:
-        _inicializar_data_json()
+        usuario_ref = usuarios_ref.document(correo)
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
-        usuario_encontrado = False
-        for usuario in data["usuarios"]:
-            if usuario["correo"] == correo:
-                if nombre:
-                    usuario["nombre"] = nombre
-                if apellido:
-                    usuario["apellido"] = apellido
-                if rol:
-                    usuario["rol"] = rol
-                if estado:
-                    usuario["estado"] = estado
-                usuario_encontrado = True
-                break
-        
-        if not usuario_encontrado:
+        if not usuario_ref.get().exists:
             return {"error": "Usuario no encontrado"}
         
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        actualizaciones = {}
+        if nombre:
+            actualizaciones["nombre"] = nombre
+        if apellido:
+            actualizaciones["apellido"] = apellido
+        if rol:
+            actualizaciones["rol"] = rol
+        if estado:
+            actualizaciones["estado"] = estado
+        
+        if actualizaciones:
+            usuario_ref.update(actualizaciones)
         
         return {"mensaje": "Usuario actualizado correctamente"}
     except Exception as e:
@@ -146,32 +154,29 @@ def services_actualizar_usuario(correo: str, nombre: str = None, apellido: str =
 def services_inicio_de_sesion(correo: str, contraseña: str):
     """Valida correo y contraseña para login"""
     try:
-        _inicializar_data_json()
+        usuario_doc = usuarios_ref.document(correo).get()
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
+        if not usuario_doc.exists:
+            return {"error": "Correo no encontrado"}
         
-        for usuario in data["usuarios"]:
-            if usuario["correo"] == correo:
-                try:
-                    # Verificar contraseña hasheada
-                    ph.verify(usuario["contraseña"], contraseña)
-                    # Si llega aquí, contraseña es correcta
-                    return {
-                        "mensaje": "Sesión iniciada correctamente",
-                        "usuario": {
-                            "id": usuario.get("id"),
-                            "nombre": usuario["nombre"],
-                            "apellido": usuario.get("apellido", ""),
-                            "correo": usuario["correo"],
-                            "rol": usuario.get("rol", ""),
-                            "estado": usuario.get("estado", "Activo")
-                        }
-                    }
-                except VerifyMismatchError:
-                    return {"error": "Contraseña incorrecta"}
+        usuario_data = usuario_doc.to_dict()
         
-        return {"error": "Correo no encontrado"}
+        try:
+            # Verificar contraseña hasheada
+            ph.verify(usuario_data["contraseña"], contraseña)
+            # Si llega aquí, contraseña es correcta
+            return {
+                "mensaje": "Sesión iniciada correctamente",
+                "usuario": {
+                    "correo": usuario_data.get("correo"),
+                    "nombre": usuario_data["nombre"],
+                    "apellido": usuario_data.get("apellido", ""),
+                    "rol": usuario_data.get("rol", ""),
+                    "estado": usuario_data.get("estado", "Activo")
+                }
+            }
+        except VerifyMismatchError:
+            return {"error": "Contraseña incorrecta"}
     except Exception as e:
         return {"error": f"Error al iniciar sesión: {str(e)}"}
 
@@ -179,23 +184,12 @@ def services_inicio_de_sesion(correo: str, contraseña: str):
 def services_eliminar_usuario(correo: str):
     """Elimina un usuario por correo"""
     try:
-        _inicializar_data_json()
+        usuario_ref = usuarios_ref.document(correo)
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
-        usuario_encontrado = False
-        for i, usuario in enumerate(data["usuarios"]):
-            if usuario["correo"] == correo:
-                del data["usuarios"][i]
-                usuario_encontrado = True
-                break
-        
-        if not usuario_encontrado:
+        if not usuario_ref.get().exists:
             return {"error": "Usuario no encontrado"}
         
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        usuario_ref.delete()
         
         return {"mensaje": "Usuario eliminado correctamente"}
     except Exception as e:

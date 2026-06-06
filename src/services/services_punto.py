@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import json
 import os
 from pathlib import Path
@@ -22,15 +23,23 @@ def _obtener_proximo_id(seccion: str) -> int:
     if data.get(seccion, []):
         return max(item.get("id", 0) for item in data[seccion]) + 1
     return 1
+=======
+from data.database import db, puntos_ref
+>>>>>>> main
 
 
 def services_listar_puntos():
     """Lista todos los puntos de reciclaje"""
     try:
-        _inicializar_data_json()
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        return {"puntos": data.get("puntos", [])}
+        puntos = []
+        docs = puntos_ref.stream()
+        
+        for doc in docs:
+            punto_data = doc.to_dict()
+            punto_data["id"] = doc.id  # Incluir el ID del documento
+            puntos.append(punto_data)
+        
+        return {"puntos": puntos}
     except Exception as e:
         return {"error": f"Error al listar puntos: {str(e)}"}
 
@@ -39,15 +48,7 @@ def services_crear_punto(municipalidad: str, latitud: float, longitud: float, es
                         urgencia: str = "Normal", capacidad_maxima: float = 0, capacidad_ocupada: float = 0):
     """Crea un nuevo punto de reciclaje"""
     try:
-        _inicializar_data_json()
-        
-        proximo_id = _obtener_proximo_id("puntos")
-        
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
         nuevo_punto = {
-            "id": proximo_id,
             "municipalidad": municipalidad,
             "latitud": latitud,
             "longitud": longitud,
@@ -57,97 +58,79 @@ def services_crear_punto(municipalidad: str, latitud: float, longitud: float, es
             "capacidad_ocupada": capacidad_ocupada
         }
         
-        data["puntos"].append(nuevo_punto)
-        
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        # Firestore genera automáticamente el ID
+        doc_ref = puntos_ref.document()
+        doc_ref.set(nuevo_punto)
         
         return {
             "mensaje": "Punto de reciclaje creado correctamente",
-            "punto": nuevo_punto
+            "punto": {
+                **nuevo_punto,
+                "id": doc_ref.id
+            }
         }
     except Exception as e:
         return {"error": f"Error al crear punto: {str(e)}"}
 
 
-def services_leer_punto(punto_id: int):
+def services_leer_punto(punto_id: str):
     """Lee un punto por ID"""
     try:
-        _inicializar_data_json()
+        punto = puntos_ref.document(punto_id).get()
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
+        if not punto.exists:
+            return {"error": "Punto no encontrado"}
         
-        for punto in data.get("puntos", []):
-            if punto["id"] == punto_id:
-                return {"punto": punto}
-        
-        return {"error": "Punto no encontrado"}
+        punto_data = punto.to_dict()
+        punto_data["id"] = punto.id
+        return {"punto": punto_data}
     except Exception as e:
         return {"error": f"Error al leer punto: {str(e)}"}
 
 
-def services_actualizar_punto(punto_id: int, municipalidad: str = None, latitud: float = None, 
+def services_actualizar_punto(punto_id: str, municipalidad: str = None, latitud: float = None, 
                              longitud: float = None, estado: str = None, urgencia: str = None,
                              capacidad_maxima: float = None, capacidad_ocupada: float = None):
     """Actualiza datos de un punto de reciclaje"""
     try:
-        _inicializar_data_json()
+        punto_ref = puntos_ref.document(punto_id)
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
-        punto_encontrado = False
-        for punto in data.get("puntos", []):
-            if punto["id"] == punto_id:
-                if municipalidad:
-                    punto["municipalidad"] = municipalidad
-                if latitud is not None:
-                    punto["latitud"] = latitud
-                if longitud is not None:
-                    punto["longitud"] = longitud
-                if estado:
-                    punto["estado"] = estado
-                if urgencia:
-                    punto["urgencia"] = urgencia
-                if capacidad_maxima is not None:
-                    punto["capacidad_maxima"] = capacidad_maxima
-                if capacidad_ocupada is not None:
-                    punto["capacidad_ocupada"] = capacidad_ocupada
-                punto_encontrado = True
-                break
-        
-        if not punto_encontrado:
+        if not punto_ref.get().exists:
             return {"error": "Punto no encontrado"}
         
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        actualizaciones = {}
+        if municipalidad:
+            actualizaciones["municipalidad"] = municipalidad
+        if latitud is not None:
+            actualizaciones["latitud"] = latitud
+        if longitud is not None:
+            actualizaciones["longitud"] = longitud
+        if estado:
+            actualizaciones["estado"] = estado
+        if urgencia:
+            actualizaciones["urgencia"] = urgencia
+        if capacidad_maxima is not None:
+            actualizaciones["capacidad_maxima"] = capacidad_maxima
+        if capacidad_ocupada is not None:
+            actualizaciones["capacidad_ocupada"] = capacidad_ocupada
+        
+        if actualizaciones:
+            punto_ref.update(actualizaciones)
         
         return {"mensaje": "Punto actualizado correctamente"}
     except Exception as e:
         return {"error": f"Error al actualizar punto: {str(e)}"}
 
 
-def services_eliminar_punto(punto_id: int):
+def services_eliminar_punto(punto_id: str):
     """Elimina un punto de reciclaje por ID"""
     try:
-        _inicializar_data_json()
+        punto_ref = puntos_ref.document(punto_id)
         
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        
-        punto_encontrado = False
-        for i, punto in enumerate(data.get("puntos", [])):
-            if punto["id"] == punto_id:
-                del data["puntos"][i]
-                punto_encontrado = True
-                break
-        
-        if not punto_encontrado:
+        if not punto_ref.get().exists:
             return {"error": "Punto no encontrado"}
         
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=4)
+        punto_ref.delete()
         
         return {"mensaje": "Punto eliminado correctamente"}
     except Exception as e:
