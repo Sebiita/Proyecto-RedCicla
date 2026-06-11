@@ -1,39 +1,9 @@
-<<<<<<< HEAD
-import json
-import os
-from pathlib import Path
-=======
->>>>>>> main
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from data.database import db, usuarios_ref
 
 # Inicializar hasher de contraseñas
 ph = PasswordHasher()
-<<<<<<< HEAD
-
-# Path absoluto al archivo data.json dentro de src/data
-BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_FILE = str(BASE_DIR / 'data' / 'data.json')
-
-
-def _inicializar_data_json():
-    """Inicializa data.json si no existe"""
-    if not os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "w") as f:
-            json.dump({"usuarios": [], "camiones": [], "puntos": [], "rutas": []}, f, indent=4)
-
-
-def _obtener_proximo_id(seccion: str) -> int:
-    """Obtiene el próximo ID disponible para una sección"""
-    _inicializar_data_json()
-    with open(DATA_FILE, "r") as f:
-        data = json.load(f)
-    if data.get(seccion, []):
-        return max(item.get("id", 0) for item in data[seccion]) + 1
-    return 1
-=======
->>>>>>> main
 
 
 def _usuario_existe(correo: str) -> bool:

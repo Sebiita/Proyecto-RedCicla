@@ -1,15 +1,4 @@
-<<<<<<< HEAD
-import json
-import os
-from datetime import date
-from pathlib import Path
-
-# Path absoluto al archivo data.json dentro de src/data
-BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_FILE = str(BASE_DIR / 'data' / 'data.json')
-=======
 from data.database import db, rutas_ref
->>>>>>> main
 
 
 def services_crear_ruta(fecha: str, camion_asignado: str, chofer_asignado: str, 

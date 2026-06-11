@@ -1,21 +1,4 @@
-<<<<<<< HEAD
-import json
-import os
-from pathlib import Path
-
-# Path absoluto al archivo data.json dentro de src/data
-BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_FILE = str(BASE_DIR / 'data' / 'data.json')
-
-
-def _inicializar_data_json():
-    """Inicializa data.json si no existe"""
-    if not os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "w") as f:
-            json.dump({"usuarios": [], "camiones": [], "puntos": [], "rutas": []}, f, indent=4)
-=======
 from data.database import db, camiones_ref
->>>>>>> main
 
 
 def _camion_existe(patente: str) -> bool:
