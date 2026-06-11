@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'ficha_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -22,9 +23,6 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // ==========================================
-      // MAGIA DEL SCAFFOLD: BOTÓN FLOTANTE (MAPA)
-      // ==========================================
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           print("Abriendo el mapa...");
@@ -37,9 +35,6 @@ class HomeScreen extends StatelessWidget {
         ), // Ícono de mapa de Flutter
       ),
 
-      // ==========================================
-      // MAGIA DEL SCAFFOLD: BARRA INFERIOR
-      // ==========================================
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.green, // Color si está seleccionado
         unselectedItemColor: Colors.grey, // Color si no lo está
@@ -59,15 +54,12 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
 
-      // ==========================================
-      // EL CUERPO DE LA APP (EL BODY)
-      // ==========================================
       body: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. ENCABEZADO VERDE (Tu código original perfeccionado)
+            // 1. ENCABEZADO VERDE
             Container(
               height: altoPantalla * 0.15,
               width: double.infinity,
@@ -155,73 +147,88 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 itemCount: puntosDiarios, // Le decimos que dibuje 5 cosas
                 itemBuilder: (context, index) {
-                  // Este return es el diseño de UNA sola ficha.
-                  // Flutter la repetirá 5 veces automáticamente.
-                  return Container(
-                    margin: const EdgeInsets.only(
-                      bottom: 16,
-                    ), // Espacio entre cada ficha
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.green[400]!,
-                        width: 2,
-                      ), // Borde verde
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
+                  // ==========================================
+                  // GESTURE DETECTOR: Envuelve la ficha para hacerla clickeable
+                  // ==========================================
+                  return GestureDetector(
+                    onTap: () {
+                      // El hipervínculo hacia la pantalla de la ficha
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FichaScreen(),
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        // EL ÍCONO
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.green[100],
-                            shape: BoxShape
-                                .circle, // Hace que el fondo del ícono sea redondo
-                          ),
-                          child: const Icon(
-                            Icons.location_on,
-                            color: Colors.green,
-                          ),
-                        ),
+                      );
+                    },
 
-                        const SizedBox(width: 16),
-
-                        // EL TEXTO DEL PUNTO
-                        Expanded(
-                          // Usamos Expanded para que el texto no empuje los bordes si es muy largo
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                puntos[index], // AQUÍ INYECTAMOS EL NOMBRE DESDE LA LISTA
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'A 200 metros de tu posición',
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                    // Tu diseño original del Container va aquí adentro como "child"
+                    child: Container(
+                      margin: const EdgeInsets.only(
+                        bottom: 16,
+                      ), // Espacio entre cada ficha
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.green[400]!,
+                          width: 2,
+                        ), // Borde verde
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 10,
+                            offset: Offset(0, 5),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          // EL ÍCONO
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.green[100],
+                              shape: BoxShape
+                                  .circle, // Hace que el fondo del ícono sea redondo
+                            ),
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.green,
+                            ),
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          // EL TEXTO DEL PUNTO
+                          Expanded(
+                            // Usamos Expanded para que el texto no empuje los bordes si es muy largo
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  puntos[index], // AQUÍ INYECTAMOS EL NOMBRE DESDE LA LISTA
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'A 200 metros de tu posición',
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
+                  // ==========================================
                 },
               ),
             ),
