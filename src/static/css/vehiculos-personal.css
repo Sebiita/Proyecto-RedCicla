@@ -372,3 +372,87 @@
 .admin-content.vp-content {
     flex-direction: column;
 }
+
+/* ========== BOTÓN TOMAR PESO (HU-15) ========== */
+.table-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.btn-peso {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, var(--rc-green-600), #0d9488);
+    color: #fff;
+    border: none;
+    border-radius: var(--rc-radius-lg);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--rc-transition), transform 80ms ease, box-shadow var(--rc-transition);
+    box-shadow: var(--rc-shadow);
+}
+
+.btn-peso:hover {
+    background: linear-gradient(135deg, var(--rc-green-700), #0f766e);
+    box-shadow: var(--rc-shadow-lg);
+}
+
+.btn-peso:active {
+    transform: scale(0.97);
+}
+
+/* ========== MODAL PESO ========== */
+.modal-peso-box {
+    max-width: 28rem;
+    text-align: left;
+}
+
+.modal-peso-header {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 0.375rem;
+}
+
+.modal-peso-header svg {
+    color: var(--rc-green-600);
+    flex-shrink: 0;
+}
+
+.modal-peso-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rc-gray-900);
+}
+
+.modal-peso-desc {
+    font-size: 0.8125rem;
+    color: var(--rc-gray-500);
+    margin: 0 0 1.25rem 0;
+    line-height: 1.4;
+}
+
+.modal-peso-box .form-group {
+    margin-bottom: 1rem;
+}
+
+.modal-peso-box .modal-actions {
+    margin-top: 0.5rem;
+    justify-content: flex-end;
+}
+
+.btn-registrar-peso {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.btn-registrar-peso:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

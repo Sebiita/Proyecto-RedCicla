@@ -21,6 +21,11 @@ class CamionActualizar(BaseModel):
     estado_mantencion: Optional[str] = None
 
 
+class CamionRegistroPeso(BaseModel):
+    """Modelo para registrar peso bruto en balanza"""
+    peso_bruto: float = Field(..., gt=0, description="Peso bruto del camión en kg registrado en balanza")
+
+
 class CamionRespuesta(CamionBase):
     """Modelo de respuesta para camión"""
     pass
