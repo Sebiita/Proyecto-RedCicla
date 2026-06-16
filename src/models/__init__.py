@@ -2,6 +2,7 @@ from .usuario import UsuarioBase, UsuarioCrear, UsuarioRespuesta, UsuarioLogin, 
 from .camion import CamionBase, CamionCrear, CamionActualizar, CamionRespuesta, CamionRegistroPeso
 from .punto import PuntoRecicljeBase, PuntoRecicljeCrear, PuntoRecicljeActualizar, PuntoRecicljeRespuesta
 from .ruta import RutaBase, RutaCrear, RutaActualizar, RutaRespuesta
+from .ficha import FichaBase, FichaCrear, FichaRespuesta, FichaSincronizar, FichaActualizarEstado
 
 __all__ = [
     # Usuario
@@ -11,5 +12,7 @@ __all__ = [
     # Punto Reciclaje
     "PuntoRecicljeBase", "PuntoRecicljeCrear", "PuntoRecicljeActualizar", "PuntoRecicljeRespuesta",
     # Ruta
-    "RutaBase", "RutaCrear", "RutaActualizar", "RutaRespuesta"
+    "RutaBase", "RutaCrear", "RutaActualizar", "RutaRespuesta",
+    # Ficha
+    "FichaBase", "FichaCrear", "FichaRespuesta", "FichaSincronizar"
 ]

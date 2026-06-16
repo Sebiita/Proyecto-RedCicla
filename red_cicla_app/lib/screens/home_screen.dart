@@ -9,13 +9,14 @@ class HomeScreen extends StatelessWidget {
     final altoPantalla = MediaQuery.of(context).size.height;
 
     // 1. SIMULAMOS LOS DATOS QUE LLEGARÍAN DEL BACKEND
-    // Creamos una lista (Array) con 5 nombres de puntos
-    final List<String> puntos = [
-      'Plaza de Armas',
-      'Supermercado Líder',
-      'Calle El Roble 450',
-      'Parque Central',
-      'Hospital San Juan',
+    // Cada punto ahora tiene un ID para poder referenciarlo en las fichas
+    final String rutaId = 'ruta_15_06_2026'; // ID de la ruta del día
+    final List<Map<String, dynamic>> puntos = [
+      {'id': 'punto_01', 'nombre': 'Plaza de Armas', 'estado': 'pendiente'},
+      {'id': 'punto_02', 'nombre': 'Supermercado Líder', 'estado': 'pendiente'},
+      {'id': 'punto_03', 'nombre': 'Calle El Roble 450', 'estado': 'pendiente'},
+      {'id': 'punto_04', 'nombre': 'Parque Central', 'estado': 'pendiente'},
+      {'id': 'punto_05', 'nombre': 'Hospital San Juan', 'estado': 'pendiente'},
     ];
     // La cantidad de puntos se calcula sola viendo el tamaño de la lista
     final int puntosDiarios = puntos.length;
@@ -147,16 +148,22 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 itemCount: puntosDiarios, // Le decimos que dibuje 5 cosas
                 itemBuilder: (context, index) {
+                  final punto = puntos[index];
                   // ==========================================
                   // GESTURE DETECTOR: Envuelve la ficha para hacerla clickeable
                   // ==========================================
                   return GestureDetector(
                     onTap: () {
                       // El hipervínculo hacia la pantalla de la ficha
+                      // Ahora pasamos los IDs necesarios para crear la ficha
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const FichaScreen(),
+                          builder: (context) => FichaScreen(
+                            rutaId: rutaId,
+                            puntoId: punto['id'],
+                            nombrePunto: punto['nombre'],
+                          ),
                         ),
                       );
                     },
@@ -207,7 +214,7 @@ class HomeScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  puntos[index], // AQUÍ INYECTAMOS EL NOMBRE DESDE LA LISTA
+                                  punto['nombre'], // INYECTAMOS EL NOMBRE DESDE EL DICCIONARIO
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,

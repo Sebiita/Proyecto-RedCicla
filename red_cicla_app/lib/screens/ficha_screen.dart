@@ -1,7 +1,106 @@
 import 'package:flutter/material.dart';
+import '../services/ficha_service.dart';
 
-class FichaScreen extends StatelessWidget {
-  const FichaScreen({super.key});
+class FichaScreen extends StatefulWidget {
+  /// ID de la ruta actual (llave foránea)
+  final String rutaId;
+
+  /// ID del punto actual (llave foránea)
+  final String puntoId;
+
+  /// Nombre del punto (para mostrar en pantalla)
+  final String nombrePunto;
+
+  const FichaScreen({
+    super.key,
+    required this.rutaId,
+    required this.puntoId,
+    required this.nombrePunto,
+  });
+
+  @override
+  State<FichaScreen> createState() => _FichaScreenState();
+}
+
+class _FichaScreenState extends State<FichaScreen> {
+  // Controllers para capturar los datos del formulario
+  final TextEditingController _kilosController = TextEditingController();
+  final TextEditingController _observacionesController =
+      TextEditingController();
+
+  // Estado del formulario
+  bool _enviando = false;
+  bool _guardadoLocal = false;
+
+  @override
+  void dispose() {
+    _kilosController.dispose();
+    _observacionesController.dispose();
+    super.dispose();
+  }
+
+  /// Guarda la ficha localmente como diccionario y la envía al servidor
+  Future<void> _finalizarRetiro() async {
+    // Validar que los kilos estén llenos
+    final kilosTexto = _kilosController.text.trim();
+    if (kilosTexto.isEmpty) {
+      _mostrarSnackBar('⚠️ Debes ingresar los kilos recogidos', Colors.orange);
+      return;
+    }
+
+    final kilos = double.tryParse(kilosTexto);
+    if (kilos == null || kilos <= 0) {
+      _mostrarSnackBar('⚠️ Ingresa un valor numérico válido mayor a 0', Colors.orange);
+      return;
+    }
+
+    setState(() => _enviando = true);
+
+    // 1. CREAR EL DICCIONARIO Y GUARDARLO LOCALMENTE (en memoria + disco)
+    final fichaDict = await FichaService.crearFichaLocal(
+      rutaId: widget.rutaId,
+      puntoId: widget.puntoId,
+      kilosRecogidos: kilos,
+      observaciones: _observacionesController.text.trim(),
+      fotoAntesUrl: '', // Por ahora sin fotos
+      fotoDespuesUrl: '',
+    );
+
+    setState(() => _guardadoLocal = true);
+
+    // 2. INTENTAR ENVIAR AL SERVIDOR
+    final resultado = await FichaService.enviarFichaAlServidor(fichaDict);
+
+    setState(() => _enviando = false);
+
+    if (resultado['exito'] == true) {
+      _mostrarSnackBar('✅ Ficha guardada y sincronizada', Colors.green);
+      // Volver a la pantalla anterior después de un momento
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (mounted) Navigator.pop(context);
+    } else {
+      // Se guardó localmente pero no se pudo enviar
+      _mostrarSnackBar(
+        '📋 Guardado local. Se sincronizará al detectar señal.',
+        Colors.blue,
+      );
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  void _mostrarSnackBar(String mensaje, Color color) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,13 +111,25 @@ class FichaScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 1, // Le da una sombrita muy sutil abajo
         iconTheme: const IconThemeData(color: Colors.grey), // Flecha gris
-        title: const Text(
-          'Ficha de Recolección',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ficha de Recolección',
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              widget.nombrePunto,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
         centerTitle: false,
       ),
@@ -41,6 +152,7 @@ class FichaScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             TextField(
+              controller: _kilosController,
               // TRUCO 1: Abre el teclado con números y decimales
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
@@ -187,6 +299,7 @@ class FichaScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             TextField(
+              controller: _observacionesController,
               maxLines: 3, // TRUCO 2: Esto lo convierte en un textarea grande
               decoration: InputDecoration(
                 hintText: 'Ej: Contenedor dañado, difícil acceso...',
@@ -210,41 +323,77 @@ class FichaScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  print("¡Retiro guardado!");
-                },
+                onPressed: _enviando ? null : _finalizarRetiro,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
+                  disabledBackgroundColor: Colors.grey[400],
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
                   elevation: 5,
                 ),
-                child: const Text(
-                  'FINALIZAR RETIRO',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+                child: _enviando
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'FINALIZAR RETIRO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
 
             const SizedBox(height: 8),
 
-            // Texto pequeño de sincronización
-            const Center(
+            // Texto pequeño de sincronización con estado dinámico
+            Center(
               child: Text(
-                'Se sincronizará automáticamente al detectar señal.',
+                _guardadoLocal
+                    ? '✅ Ficha guardada localmente'
+                    : 'Se sincronizará automáticamente al detectar señal.',
                 style: TextStyle(
                   fontSize: 10,
-                  color: Colors.grey,
+                  color: _guardadoLocal ? Colors.green : Colors.grey,
                   fontStyle: FontStyle.italic,
                 ),
               ),
             ),
+
+            // Mostrar fichas pendientes si hay
+            if (FichaService.hayPendientes) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orange[200]!),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.cloud_off, color: Colors.orange, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${FichaService.cantidadPendientes} ficha(s) pendiente(s) de sincronizar',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
