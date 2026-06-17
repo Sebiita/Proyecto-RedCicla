@@ -56,8 +56,8 @@ class _FichaScreenState extends State<FichaScreen> {
 
     setState(() => _enviando = true);
 
-    // 1. CREAR EL DICCIONARIO Y GUARDARLO LOCALMENTE (en memoria + disco)
-    final fichaDict = await FichaService.crearFichaLocal(
+    // 1. CREAR EL DICCIONARIO Y GUARDARLO EN FIREBASE (Cache/Nube)
+    await FichaService.crearFichaLocal(
       rutaId: widget.rutaId,
       puntoId: widget.puntoId,
       kilosRecogidos: kilos,
@@ -66,27 +66,16 @@ class _FichaScreenState extends State<FichaScreen> {
       fotoDespuesUrl: '',
     );
 
-    setState(() => _guardadoLocal = true);
+    setState(() {
+      _enviando = false;
+      _guardadoLocal = true;
+    });
 
-    // 2. INTENTAR ENVIAR AL SERVIDOR
-    final resultado = await FichaService.enviarFichaAlServidor(fichaDict);
-
-    setState(() => _enviando = false);
-
-    if (resultado['exito'] == true) {
-      _mostrarSnackBar('✅ Ficha guardada y sincronizada', Colors.green);
-      // Volver a la pantalla anterior después de un momento
-      await Future.delayed(const Duration(milliseconds: 800));
-      if (mounted) Navigator.pop(context);
-    } else {
-      // Se guardó localmente pero no se pudo enviar
-      _mostrarSnackBar(
-        '📋 Guardado local. Se sincronizará al detectar señal.',
-        Colors.blue,
-      );
-      await Future.delayed(const Duration(milliseconds: 1500));
-      if (mounted) Navigator.pop(context);
-    }
+    _mostrarSnackBar('✅ Ficha guardada exitosamente', Colors.green);
+    
+    // Volver a la pantalla anterior después de un momento
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (mounted) Navigator.pop(context);
   }
 
   void _mostrarSnackBar(String mensaje, Color color) {
@@ -359,8 +348,8 @@ class _FichaScreenState extends State<FichaScreen> {
             Center(
               child: Text(
                 _guardadoLocal
-                    ? '✅ Ficha guardada localmente'
-                    : 'Se sincronizará automáticamente al detectar señal.',
+                    ? '✅ Ficha procesada por Firebase'
+                    : 'Firebase sincronizará automáticamente offline/online.',
                 style: TextStyle(
                   fontSize: 10,
                   color: _guardadoLocal ? Colors.green : Colors.grey,
@@ -368,32 +357,6 @@ class _FichaScreenState extends State<FichaScreen> {
                 ),
               ),
             ),
-
-            // Mostrar fichas pendientes si hay
-            if (FichaService.hayPendientes) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange[50],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.orange[200]!),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.cloud_off, color: Colors.orange, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${FichaService.cantidadPendientes} ficha(s) pendiente(s) de sincronizar',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.orange,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
       ),
