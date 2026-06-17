@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "573203781096",
+    "project_id": "proyecto-redcicla",
+    "storage_bucket": "proyecto-redcicla.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:573203781096:android:b7cd6d40c4916aa4b6805d",
+        "android_client_info": {
+          "package_name": "com.example.red_cicla_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzVLUKt-1f2aLC-gLQ_LBV0qzEWU7fhMg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

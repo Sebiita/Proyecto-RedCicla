@@ -1,3 +1,4 @@
+import 'firebase_options.dart'; // ¡Agregas esta línea al inicio!
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,15 +10,14 @@ void main() async {
 
   // Envolvemos Firebase en un try-catch para evitar la pantalla negra
   try {
-    await Firebase.initializeApp();
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true,
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
     );
     debugPrint("Firebase listo!");
   } catch (e) {
     debugPrint("-------------------------------------------------");
-    debugPrint("?? ATENCI�N: FIREBASE NO EST� CONFIGURADO ??");
-    debugPrint("Detalle t�cnico: $e");
+    debugPrint("?? ATENCIÓN: FIREBASE NO ESTÁ CONFIGURADO ??");
+    debugPrint("Detalle técnico: $e");
     debugPrint("Falta vincular el proyecto con 'flutterfire configure'");
     debugPrint("-------------------------------------------------");
   }
