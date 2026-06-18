@@ -2,28 +2,43 @@
 /// Cambiar la URL base aquí para alternar entre desarrollo local y producción.
 class ApiConfig {
   // ============================================================
-  // DESARROLLO LOCAL:
-  // - Android Emulator: usa 10.0.2.2 (alias del host)
-  // - iOS Simulator / dispositivo real en la misma red: usa la IP local
-  // - Web: usa localhost
+  // DESARROLLO LOCAL CON CELULAR FÍSICO VÍA USB:
+  // Antes de correr la app, ejecuta en la terminal del PC:
+  //   adb reverse tcp:8000 tcp:8000
+  // Eso redirige el localhost:8000 del celular al servidor del PC.
+  //
+  // Para emulador Android usa: http://10.0.2.2:8000
   // ============================================================
 
   /// URL base del servidor FastAPI
-  /// Para desarrollo local con dispositivo físico, cambia a tu IP local:
-  /// Ejemplo: 'http://192.168.1.100:8000'
-  static const String baseUrl = 'http://10.0.2.2:8000';
+  static const String baseUrl = 'http://localhost:8000';
 
-  // Endpoints de fichas
+  // ── Endpoints de Fichas ──────────────────────────────────────
   static const String fichasRegistrar = '/fichas/registrar';
   static const String fichasSincronizar = '/fichas/sincronizar';
   static const String fichasListar = '/fichas/listar';
   static String fichasPorRuta(String rutaId) => '/fichas/por-ruta/$rutaId';
   static String fichasObtener(String fichaId) => '/fichas/obtener/$fichaId';
 
-  // Endpoints de rutas
+  // ── Endpoints de Rutas ───────────────────────────────────────
   static const String rutasListar = '/rutas/listar';
   static String rutasObtener(String rutaId) => '/rutas/obtener/$rutaId';
 
-  // Endpoints de login
+  // ── Endpoints de Puntos de Reciclaje ─────────────────────────
+  /// Lista todos los puntos: GET /puntos/obtener
+  static const String puntosListar = '/puntos/obtener';
+  /// Obtiene un punto por ID: GET /puntos/obtener/{id}
+  static String puntosObtener(String puntoId) => '/puntos/obtener/$puntoId';
+
+  // ── Endpoints de Camiones ────────────────────────────────────
+  /// Lista todos los camiones: GET /camiones/obtener
+  static const String camionesListar = '/camiones/obtener';
+  /// Obtiene un camión por patente: GET /camiones/obtener/{patente}
+  static String camionesObtener(String patente) => '/camiones/obtener/$patente';
+
+  // ── Endpoints de Usuarios ────────────────────────────────────
+  /// Login: POST /usuarios/login
   static const String usuariosLogin = '/usuarios/login';
+  /// Obtiene un usuario por correo: GET /usuarios/obtener/{correo}
+  static String usuariosObtener(String correo) => '/usuarios/obtener/$correo';
 }

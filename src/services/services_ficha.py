@@ -37,10 +37,9 @@ def services_crear_ficha(ruta_id: str, punto_id: str, kilos_recogidos: float,
         doc_ref = fichas_ref.document()
         doc_ref.set(nueva_ficha)
 
-        # 2. Actualizar el estado del punto en la ruta
-        #    Como los puntos están guardados como array en el documento de la ruta,
-        #    leemos la ruta, buscamos el punto y actualizamos su estado
-        _actualizar_estado_punto_en_ruta(ruta_id, punto_id)
+        # 2. Actualizar el estado del punto en la colección global
+        #    Se reinicia su capacidad
+        _actualizar_estado_punto_en_ruta(ruta_id, punto_id, kilos_recogidos)
 
         return {
             "mensaje": "Ficha creada correctamente",
@@ -53,34 +52,26 @@ def services_crear_ficha(ruta_id: str, punto_id: str, kilos_recogidos: float,
         return {"error": f"Error al crear ficha: {str(e)}"}
 
 
-def _actualizar_estado_punto_en_ruta(ruta_id: str, punto_id: str):
+def _actualizar_estado_punto_en_ruta(ruta_id: str, punto_id: str, kilos_recogidos: float = 0):
     """
-    Actualiza el estado de un punto específico a 'completado' 
-    dentro del array de puntos de una ruta.
+    Actualiza el estado del punto en la colección 'puntos',
+    limpiando su capacidad ocupada (o restando la cantidad recogida).
     """
+    from services.services_punto import services_leer_punto, services_actualizar_punto
+
     try:
-        ruta_ref = rutas_ref.document(ruta_id)
-        ruta_doc = ruta_ref.get()
-
-        if not ruta_doc.exists:
-            print(f"Advertencia: Ruta '{ruta_id}' no encontrada para actualizar punto")
+        # Aquí seguimos la indicación de apuntar directamente a modificar el punto 
+        # en la BD en vez de un array dentro de la ruta
+        punto_doc = services_leer_punto(punto_id)
+        if "error" in punto_doc:
+            print(f"Advertencia: Punto '{punto_id}' no encontrado en la BD")
             return
-
-        ruta_data = ruta_doc.to_dict()
-        puntos = ruta_data.get("puntos", [])
-
-        # Buscar el punto en el array y actualizar su estado
-        punto_actualizado = False
-        for i, punto in enumerate(puntos):
-            if isinstance(punto, dict) and punto.get("id") == punto_id:
-                puntos[i]["estado"] = "completado"
-                punto_actualizado = True
-                break
-
-        if punto_actualizado:
-            ruta_ref.update({"puntos": puntos})
-        else:
-            print(f"Advertencia: Punto '{punto_id}' no encontrado en ruta '{ruta_id}'")
+        
+        # Asignar la capacidad ocupada al valor exacto recogido ingresado en la app móvil
+        nueva_capacidad = float(kilos_recogidos)
+        
+        services_actualizar_punto(punto_id, capacidad_ocupada=nueva_capacidad)
+        print(f"Punto '{punto_id}' actualizado: Capacidad ocupada fijada en {nueva_capacidad}.")
 
     except Exception as e:
         print(f"Error al actualizar estado del punto: {str(e)}")
@@ -261,7 +252,8 @@ def services_sincronizar_fichas(fichas: list):
         for ficha in fichas:
             _actualizar_estado_punto_en_ruta(
                 ficha["ruta_id"],
-                ficha["punto_id"]
+                ficha["punto_id"],
+                ficha["kilos_recogidos"]
             )
 
         return {

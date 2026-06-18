@@ -1,43 +1,51 @@
-import 'firebase_options.dart'; // ¡Agregas esta línea al inicio!
+import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'screens/login_screen.dart'; 
-import 'services/ficha_service.dart';
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
+import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Envolvemos Firebase en un try-catch para evitar la pantalla negra
+  // Inicializar Firebase (necesario para Firestore — sync de fichas)
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint("Firebase listo!");
+    debugPrint('Firebase listo ✅');
   } catch (e) {
-    debugPrint("-------------------------------------------------");
-    debugPrint("?? ATENCIÓN: FIREBASE NO ESTÁ CONFIGURADO ??");
-    debugPrint("Detalle técnico: $e");
-    debugPrint("Falta vincular el proyecto con 'flutterfire configure'");
-    debugPrint("-------------------------------------------------");
+    debugPrint('-------------------------------------------------');
+    debugPrint('⚠️  ATENCIÓN: FIREBASE NO ESTÁ CONFIGURADO ⚠️');
+    debugPrint('Detalle técnico: $e');
+    debugPrint('Falta vincular el proyecto con \'flutterfire configure\'');
+    debugPrint('-------------------------------------------------');
   }
 
-  runApp(const MyApp());
+  // Intentar restaurar sesión guardada (funcionalidad "Recordarme")
+  final haySession = await AuthService.cargarSesionGuardada();
+
+  runApp(MyApp(sesionGuardada: haySession));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool sesionGuardada;
+
+  const MyApp({super.key, required this.sesionGuardada});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Red Cicla',
-      debugShowCheckedModeBanner: false, 
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      // Si hay sesión guardada, ir directo al Home; si no, mostrar Login
+      home: sesionGuardada && AuthService.usuarioActual != null
+          ? HomeScreen(usuario: AuthService.usuarioActual!)
+          : const LoginScreen(),
     );
   }
 }

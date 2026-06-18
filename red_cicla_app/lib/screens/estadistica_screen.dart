@@ -1,48 +1,88 @@
 import 'package:flutter/material.dart';
+import '../services/ficha_service.dart';
 
-class EstadisticaScreen extends StatelessWidget {
-  // Parámetros de entrada de la pantalla para que sea totalmente dinámica y conectable más adelante.
+class EstadisticaScreen extends StatefulWidget {
+  final String rutaId;
   final String nombreUsuario;
-  final String rutUsuario;
   final String patenteCamion;
   final String modeloCamion;
-  final double kilosRecogidos;
   final int puntosTotales;
-  final int puntosCompletados;
-  final int puntosNoCompletados;
   final String fechaRuta;
 
   const EstadisticaScreen({
     super.key,
-    this.nombreUsuario = 'Pedro Sanhueza',
-    this.rutUsuario = '12.345.678-9',
-    this.patenteCamion = 'AB-CD-12',
-    this.modeloCamion = 'Mercedes-Benz Atego',
-    this.kilosRecogidos = 185.5,
-    this.puntosTotales = 5,
-    this.puntosCompletados = 4,
-    this.puntosNoCompletados = 1,
-    this.fechaRuta = 'Jueves, 18 de Junio de 2026',
+    required this.rutaId,
+    required this.nombreUsuario,
+    required this.patenteCamion,
+    required this.modeloCamion,
+    required this.puntosTotales,
+    required this.fechaRuta,
   });
 
   @override
+  State<EstadisticaScreen> createState() => _EstadisticaScreenState();
+}
+
+class _EstadisticaScreenState extends State<EstadisticaScreen> {
+  // ── Estado de carga ──────────────────────────────────────────
+  bool _cargando = true;
+
+  // ── Datos calculados desde Firestore ─────────────────────────
+  double _kilosRecogidos = 0.0;
+  int _puntosCompletados = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarEstadisticas();
+  }
+
+  /// Carga las fichas del ruta actual desde Firestore y calcula estadísticas.
+  Future<void> _cargarEstadisticas() async {
+    setState(() => _cargando = true);
+
+    try {
+      // Las fichas se leen directo desde Firestore (sync offline/online)
+      final fichas =
+          await FichaService.obtenerFichasPorRuta(widget.rutaId);
+
+      double kilosTotales = 0.0;
+      for (final ficha in fichas) {
+        final kilos = (ficha['kilos_recogidos'] as num?)?.toDouble() ?? 0.0;
+        kilosTotales += kilos;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _kilosRecogidos = kilosTotales;
+        _puntosCompletados = fichas.length;
+        _cargando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _cargando = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Porcentaje de completitud para el gráfico circular
-    final double porcentajeCompletado = puntosTotales > 0 
-        ? (puntosCompletados / puntosTotales) 
+    final puntosNoCompletados =
+        (widget.puntosTotales - _puntosCompletados).clamp(0, widget.puntosTotales);
+    final double porcentajeCompletado = widget.puntosTotales > 0
+        ? (_puntosCompletados / widget.puntosTotales).clamp(0.0, 1.0)
         : 0.0;
-    
     final int porcentajeTexto = (porcentajeCompletado * 100).toInt();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Gris suave premium para fondo
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: Navigator.canPop(context)
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
+                icon: const Icon(Icons.arrow_back_ios_new,
+                    color: Colors.black87, size: 20),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
@@ -55,101 +95,121 @@ class EstadisticaScreen extends StatelessWidget {
             letterSpacing: 0.5,
           ),
         ),
+        actions: [
+          // Botón de recarga
+          if (!_cargando)
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.grey),
+              onPressed: _cargarEstadisticas,
+              tooltip: 'Actualizar',
+            ),
+        ],
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. FECHA DE LA JORNADA
-              Row(
+      body: _cargando
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.calendar_today_rounded, color: Colors.green, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    fechaRuta,
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
+                  CircularProgressIndicator(color: Colors.green),
+                  SizedBox(height: 16),
+                  Text('Calculando estadísticas...'),
                 ],
               ),
-              const SizedBox(height: 16),
+            )
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1. FECHA DE LA JORNADA
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today_rounded,
+                            color: Colors.green, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.fechaRuta.isNotEmpty
+                              ? widget.fechaRuta
+                              : 'Hoy',
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
 
-              // 2. TARJETA DEL USUARIO Y CAMIÓN
-              _buildUsuarioCamionCard(),
+                    // 2. TARJETA USUARIO Y CAMIÓN
+                    _buildUsuarioCamionCard(),
+                    const SizedBox(height: 24),
 
-              const SizedBox(height: 24),
+                    const Text(
+                      'MÉTRICAS DE HOY',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
-              // Título de la sección de estadísticas
-              const Text(
-                'MÉTRICAS DE HOY',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  letterSpacing: 1.5,
+                    // 3. PROGRESO CIRCULAR
+                    _buildProgressCard(porcentajeCompletado, porcentajeTexto,
+                        puntosNoCompletados),
+                    const SizedBox(height: 16),
+
+                    // 4. GRILLA DE MÉTRICAS
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.1,
+                      children: [
+                        _buildMetricCard(
+                          title: 'Vidrio Recogido',
+                          value: '${_kilosRecogidos.toStringAsFixed(1)} Kg',
+                          icon: Icons.scale_outlined,
+                          color: Colors.green[600]!,
+                          bgColor: Colors.green[50]!,
+                        ),
+                        _buildMetricCard(
+                          title: 'Puntos Totales',
+                          value: '${widget.puntosTotales}',
+                          icon: Icons.map_outlined,
+                          color: Colors.blue[600]!,
+                          bgColor: Colors.blue[50]!,
+                        ),
+                        _buildMetricCard(
+                          title: 'Puntos Completados',
+                          value: '$_puntosCompletados',
+                          icon: Icons.check_circle_outline_rounded,
+                          color: Colors.teal[600]!,
+                          bgColor: Colors.teal[50]!,
+                        ),
+                        _buildMetricCard(
+                          title: 'Puntos Pendientes',
+                          value: '$puntosNoCompletados',
+                          icon: Icons.pending_actions_rounded,
+                          color: Colors.orange[800]!,
+                          bgColor: Colors.orange[50]!,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-
-              // 3. SECCIÓN DE AVANCE CIRCULAR (GORGEOUS RADIAL SUMMARY CARD)
-              _buildProgressCard(porcentajeCompletado, porcentajeTexto),
-
-              const SizedBox(height: 16),
-
-              // 4. GRILLA DE MÉTRICAS (KILOS, TOTALES, COMPLETADOS, PENDIENTES)
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.1,
-                children: [
-                  _buildMetricCard(
-                    title: 'Vidrio Recogido',
-                    value: '${kilosRecogidos.toStringAsFixed(1)} Kg',
-                    icon: Icons.scale_outlined,
-                    color: Colors.green[600]!,
-                    bgColor: Colors.green[50]!,
-                  ),
-                  _buildMetricCard(
-                    title: 'Puntos Totales',
-                    value: '$puntosTotales',
-                    icon: Icons.map_outlined,
-                    color: Colors.blue[600]!,
-                    bgColor: Colors.blue[50]!,
-                  ),
-                  _buildMetricCard(
-                    title: 'Puntos Completados',
-                    value: '$puntosCompletados',
-                    icon: Icons.check_circle_outline_rounded,
-                    color: Colors.teal[600]!,
-                    bgColor: Colors.teal[50]!,
-                  ),
-                  _buildMetricCard(
-                    title: 'Puntos Pendientes',
-                    value: '$puntosNoCompletados',
-                    icon: Icons.pending_actions_rounded,
-                    color: Colors.orange[800]!,
-                    bgColor: Colors.orange[50]!,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
-  // Widget: Tarjeta elegante con datos del Usuario y el Camión
   Widget _buildUsuarioCamionCard() {
     return Container(
       decoration: BoxDecoration(
@@ -157,40 +217,30 @@ class EstadisticaScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1.5,
-        ),
+        border: Border.all(color: Colors.grey[200]!, width: 1.5),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Column(
           children: [
-            // Franja superior verde decorativa
-            Container(
-              height: 6,
-              color: Colors.green,
-            ),
+            Container(height: 6, color: Colors.green),
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  // Fila de Operador
+                  // Fila operador
                   Row(
                     children: [
                       CircleAvatar(
                         radius: 24,
                         backgroundColor: Colors.green[50],
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.green,
-                          size: 26,
-                        ),
+                        child: const Icon(Icons.person,
+                            color: Colors.green, size: 26),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -198,26 +248,21 @@ class EstadisticaScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              nombreUsuario,
+                              widget.nombreUsuario.isNotEmpty
+                                  ? widget.nombreUsuario
+                                  : 'Usuario',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                                 color: Colors.black87,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'RUT: $rutUsuario',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[500],
-                              ),
-                            ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.green[100],
                           borderRadius: BorderRadius.circular(20),
@@ -225,29 +270,25 @@ class EstadisticaScreen extends StatelessWidget {
                         child: const Text(
                           'Operador',
                           style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              color: Colors.green,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16.0),
-                    child: Divider(height: 1, color: Color(0xFFEEEEEE)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Divider(height: 1, color: Colors.grey[200]),
                   ),
-                  // Fila de Camión
+                  // Fila camión
                   Row(
                     children: [
                       CircleAvatar(
                         radius: 24,
                         backgroundColor: Colors.blue[50],
-                        child: const Icon(
-                          Icons.local_shipping_outlined,
-                          color: Colors.blueAccent,
-                          size: 24,
-                        ),
+                        child: const Icon(Icons.local_shipping_outlined,
+                            color: Colors.blueAccent, size: 24),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -255,26 +296,27 @@ class EstadisticaScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              patenteCamion,
+                              widget.patenteCamion.isNotEmpty
+                                  ? widget.patenteCamion
+                                  : 'Sin camión',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                                 color: Colors.black87,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              modeloCamion,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[500],
+                            if (widget.modeloCamion.isNotEmpty)
+                              Text(
+                                widget.modeloCamion,
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey[500]),
                               ),
-                            ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.blue[100],
                           borderRadius: BorderRadius.circular(20),
@@ -282,10 +324,9 @@ class EstadisticaScreen extends StatelessWidget {
                         child: const Text(
                           'Vehículo',
                           style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              color: Colors.blueAccent,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -299,8 +340,8 @@ class EstadisticaScreen extends StatelessWidget {
     );
   }
 
-  // Widget: Tarjeta del progreso circular de la jornada
-  Widget _buildProgressCard(double porcentajeCompletado, int porcentajeTexto) {
+  Widget _buildProgressCard(
+      double porcentajeCompletado, int porcentajeTexto, int pendientes) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -308,19 +349,15 @@ class EstadisticaScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1.5,
-        ),
+        border: Border.all(color: Colors.grey[200]!, width: 1.5),
       ),
       child: Row(
         children: [
-          // Gráfico circular
           Stack(
             alignment: Alignment.center,
             children: [
@@ -332,7 +369,8 @@ class EstadisticaScreen extends StatelessWidget {
                   strokeWidth: 10,
                   strokeCap: StrokeCap.round,
                   backgroundColor: Colors.grey[200],
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(Colors.green),
                 ),
               ),
               Column(
@@ -348,17 +386,13 @@ class EstadisticaScreen extends StatelessWidget {
                   ),
                   const Text(
                     'Listo',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
                   ),
                 ],
               ),
             ],
           ),
           const SizedBox(width: 24),
-          // Resumen verbal
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,14 +407,11 @@ class EstadisticaScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  porcentajeCompletado == 1.0
+                  porcentajeCompletado >= 1.0
                       ? '¡Excelente trabajo! Has completado todos los puntos asignados para hoy.'
-                      : 'Llevas un buen ritmo. Te quedan $puntosNoCompletados de los $puntosTotales puntos asignados en tu ruta.',
+                      : 'Llevas un buen ritmo. Te quedan $pendientes de los ${widget.puntosTotales} puntos asignados.',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                    height: 1.3,
-                  ),
+                      fontSize: 13, color: Colors.grey[600], height: 1.3),
                 ),
               ],
             ),
@@ -390,7 +421,6 @@ class EstadisticaScreen extends StatelessWidget {
     );
   }
 
-  // Widget: Tarjetas individuales de estadísticas
   Widget _buildMetricCard({
     required String title,
     required String value,
@@ -405,15 +435,12 @@ class EstadisticaScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1.5,
-        ),
+        border: Border.all(color: Colors.grey[200]!, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,11 +455,7 @@ class EstadisticaScreen extends StatelessWidget {
                   color: bgColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 22,
-                ),
+                child: Icon(icon, color: color, size: 22),
               ),
             ],
           ),
