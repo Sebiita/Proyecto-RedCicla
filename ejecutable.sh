@@ -99,7 +99,6 @@ pick_flutter_device() {
   # Forzar el fallback directo ya que flatpak no leerá la lista dinámica interna sin escalado total
   printf '%s\n' "emulator-5554"
 }
-
 run_flutter_app() {
   log "Resolviendo dependencias Flutter..."
   (
@@ -111,15 +110,38 @@ run_flutter_app() {
     fi
   )
 
+  # --- INYECTAR LA KEY DIRECTAMENTE EN LOS RECURSOS DE ANDROID ---
+  if [[ -f "$SRC_DIR/.env" ]]; then
+    local maps_key
+    maps_key=$(grep -E '^GOOGLE_MAPS_API_KEY=' "$SRC_DIR/.env" | head -n 1 | cut -d '=' -f2- | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
+    
+    if [[ -n "$maps_key" ]]; then
+      log "Inyectando GOOGLE_MAPS_API_KEY en los recursos de Android..."
+      # Creamos o sobreescribimos el archivo strings.xml para que Android tenga la clave de forma nativa temporalmente
+      mkdir -p "$FLUTTER_DIR/android/app/src/main/res/values"
+      cat <<EOF > "$FLUTTER_DIR/android/app/src/main/res/values/strings.xml"
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="maps_api_key">$maps_key</string>
+</resources>
+EOF
+    else
+      warn "GOOGLE_MAPS_API_KEY está vacío en el archivo .env"
+    fi
+  else
+    warn "No se encontró el archivo .env en $SRC_DIR"
+  fi
+  # -------------------------------------------------------------
+
   local device_id
   device_id="$(pick_flutter_device)"
   log "Ejecutando app Flutter en dispositivo: $device_id"
 
   cd "$FLUTTER_DIR"
   
-  # MODIFICADO: Si detecta Flatpak, rompe el contenedor usando flatpak-spawn hacia el host
+  # Como ya inyectamos la clave en strings.xml, corremos el comando normal sin flags complejos
   if [[ -f /.flatpak-info ]]; then
-    exec flatpak-spawn --host --env=PATH="$PATH" "$HOME/development/flutter/bin/flutter" run -d "$device_id"
+    exec flatpak-spawn --host --env=PATH="$PATH" "$HOME/development/flutter/bin/flutter" run -d "$device_id" --dds-port 8010
   else
     flutter run -d "$device_id"
   fi
@@ -136,3 +158,8 @@ main() {
 }
 
 main "$@"
+
+
+#flatpak-spawn --host $HOME/Android/Sdk/emulator/emulator -avd RedCicla_Pixel &
+
+#BACKEND_PORT=8000 EMULATOR_ID=RedCicla_Pixel ./ejecutable.sh
