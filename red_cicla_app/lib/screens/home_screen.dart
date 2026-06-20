@@ -1,59 +1,89 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'ficha_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // Lista dinámica que reemplaza a los datos duros
+  List<String> puntos = [];
+  bool cargando = true;
+  String? errorMensaje;
+
+  @override
+  void initState() {
+    super.initState();
+    obtenerPuntosDelBackend();
+  }
+
+ // Función asíncrona para conectarse a FastAPI corregida
+  Future<void> obtenerPuntosDelBackend() async {
+    final url = Uri.parse('http://10.0.2.2:8000/puntos/api/puntos');
+
+    try {
+      final respuesta = await http.get(url);
+
+      if (respuesta.statusCode == 200) {
+        // 1. Decodificamos el JSON como un Mapa, no como una Lista
+        final Map<String, dynamic> cuerpoJson = json.decode(respuesta.body);
+        
+        // 2. Extraemos la lista interna que viene bajo la clave "puntos"
+        final List<dynamic> listaPuntos = cuerpoJson['puntos'] ?? [];
+        
+        setState(() {
+          // 3. Mapeamos cada objeto de la lista para extraer su 'municipalidad'
+          puntos = listaPuntos.map((punto) {
+            if (punto is Map) {
+              return punto['municipalidad']?.toString() ?? 'Punto de Reciclaje';
+            }
+            return punto.toString();
+          }).toList();
+          
+          errorMensaje = null; // Limpiamos cualquier error previo
+          cargando = false;
+        });
+      } else {
+        setState(() {
+          errorMensaje = 'Error del servidor: ${respuesta.statusCode}';
+          cargando = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMensaje = 'No se pudo procesar la información del backend.';
+        cargando = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final altoPantalla = MediaQuery.of(context).size.height;
-
-    // 1. SIMULAMOS LOS DATOS QUE LLEGARÍAN DEL BACKEND
-    // Creamos una lista (Array) con 5 nombres de puntos
-    final List<String> puntos = [
-      'Plaza de Armas',
-      'Supermercado Líder',
-      'Calle El Roble 450',
-      'Parque Central',
-      'Hospital San Juan',
-    ];
-    // La cantidad de puntos se calcula sola viendo el tamaño de la lista
     final int puntosDiarios = puntos.length;
 
     return Scaffold(
       backgroundColor: Colors.white,
-
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          print("Abriendo el mapa...");
-        },
+        onPressed: () => print("Abriendo el mapa..."),
         backgroundColor: Colors.blue[600],
-        shape: const CircleBorder(), // Lo hace completamente redondo
-        child: const Icon(
-          Icons.map,
-          color: Colors.white,
-        ), // Ícono de mapa de Flutter
+        shape: const CircleBorder(),
+        child: const Icon(Icons.map, color: Colors.white),
       ),
-
       bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.green, // Color si está seleccionado
-        unselectedItemColor: Colors.grey, // Color si no lo está
+        selectedItemColor: Colors.green,
+        unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.route), // Ícono de ruta
-            label: 'Ruta',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart), // Ícono de estadísticas
-            label: 'Estadísticas',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person), // Ícono de perfil
-            label: 'Perfil',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.route), label: 'Ruta'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Estadísticas'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
-
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -72,39 +102,25 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       const Text(
                         'Ruta: Zona Norte',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                       ),
                       const Spacer(),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: obtenerPuntosDelBackend, // Botón para refrescar datos
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green[400],
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(
-                              color: Colors.green[200]!,
-                              width: 1,
-                            ),
+                            side: BorderSide(color: Colors.green[200]!, width: 1),
                           ),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'ONLINE',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
+                        child: Text(
+                          cargando ? '...' : 'ONLINE',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ),
                     ],
@@ -112,10 +128,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     'Camión: AB-CD-12 | Ayudante: Pedro S.',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
                   ),
                 ],
               ),
@@ -123,118 +136,115 @@ class HomeScreen extends StatelessWidget {
 
             // 2. TEXTO DE PUNTOS DE HOY
             Padding(
-              padding: const EdgeInsets.only(
-                top: 20,
-                left: 24,
-                right: 24,
-                bottom: 10,
-              ),
+              padding: const EdgeInsets.only(top: 20, left: 24, right: 24, bottom: 10),
               child: Text(
-                'PUNTOS DE HOY ($puntosDiarios)', // Inyectamos la variable
+                'PUNTOS DE HOY ($puntosDiarios)',
                 style: const TextStyle(
                   color: Colors.grey,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
-                  letterSpacing: 1.5, // Le da un toque espaciado más elegante
+                  letterSpacing: 1.5,
                 ),
               ),
             ),
 
-            // 3. LA LISTA DINÁMICA DE FICHAS (ListView)
+            // 3. CUERPO DINÁMICO (Carga, Error o Lista)
             Expanded(
-              // ListView.builder crea elementos "infinitos" basándose en tu lista
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: puntosDiarios, // Le decimos que dibuje 5 cosas
-                itemBuilder: (context, index) {
-                  // ==========================================
-                  // GESTURE DETECTOR: Envuelve la ficha para hacerla clickeable
-                  // ==========================================
-                  return GestureDetector(
-                    onTap: () {
-                      // El hipervínculo hacia la pantalla de la ficha
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FichaScreen(),
-                        ),
-                      );
-                    },
-
-                    // Tu diseño original del Container va aquí adentro como "child"
-                    child: Container(
-                      margin: const EdgeInsets.only(
-                        bottom: 16,
-                      ), // Espacio entre cada ficha
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.green[400]!,
-                          width: 2,
-                        ), // Borde verde
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 10,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          // EL ÍCONO
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.green[100],
-                              shape: BoxShape
-                                  .circle, // Hace que el fondo del ícono sea redondo
-                            ),
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Colors.green,
-                            ),
-                          ),
-
-                          const SizedBox(width: 16),
-
-                          // EL TEXTO DEL PUNTO
-                          Expanded(
-                            // Usamos Expanded para que el texto no empuje los bordes si es muy largo
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  puntos[index], // AQUÍ INYECTAMOS EL NOMBRE DESDE LA LISTA
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'A 200 metros de tu posición',
-                                  style: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                  // ==========================================
-                },
-              ),
+              child: _construirContenidoPrincipal(puntosDiarios),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // Widget auxiliar para alternar vistas según el estado de la red
+  Widget _construirContenidoPrincipal(int puntosDiarios) {
+    if (cargando) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.green),
+      );
+    }
+
+    if (errorMensaje != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.cloud_off, color: Colors.grey, size: 48),
+              const SizedBox(height: 16),
+              Text(errorMensaje!, style: const TextStyle(color: Colors.grey), textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() => cargando = true);
+                  obtenerPuntosDelBackend();
+                },
+                child: const Text('Reintentar'),
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (puntos.isEmpty) {
+      return const Center(child: Text('No hay puntos registrados para hoy.'));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      itemCount: puntosDiarios,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FichaScreen()),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.green[400]!, width: 2),
+              boxShadow: const [
+                BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5)),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.green[100], shape: BoxShape.circle),
+                  child: const Icon(Icons.location_on, color: Colors.green),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        puntos[index],
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'A 200 metros de tu posición',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
