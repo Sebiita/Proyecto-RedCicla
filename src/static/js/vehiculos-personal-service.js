@@ -70,7 +70,23 @@ const CamionesService = (() => {
         });
     }
 
-    return { registrar, obtenerTodos, obtenerPorPatente, actualizar, eliminar };
+    async function obtenerEnRuta() {
+        const resultado = await _request('/en_ruta');
+        if (resultado.error) {
+            console.error('Error al obtener camiones en ruta:', resultado.error);
+            return [];
+        }
+        return resultado.camiones || [];
+    }
+
+    async function registrarPeso(patente, peso_bruto) {
+        return await _request(`/${encodeURIComponent(patente)}/peso`, {
+            method: 'POST',
+            body: JSON.stringify({ peso_bruto }),
+        });
+    }
+
+    return { registrar, obtenerTodos, obtenerPorPatente, actualizar, eliminar, obtenerEnRuta, registrarPeso };
 })();
 
 

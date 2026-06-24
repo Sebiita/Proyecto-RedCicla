@@ -96,3 +96,76 @@ def services_eliminar_camion(patente: str):
         return {"mensaje": "Camión eliminado correctamente"}
     except Exception as e:
         return {"error": f"Error al eliminar camión: {str(e)}"}
+
+
+def services_obtener_camiones_en_ruta():
+    """Obtiene los camiones disponibles (en ruta / retorno).
+    Actualmente retorna todos los camiones registrados."""
+    try:
+        camiones = []
+        docs = camiones_ref.stream()
+        for doc in docs:
+            camion_data = doc.to_dict()
+            camion_data["patente"] = doc.id
+            camiones.append(camion_data)
+        return {"camiones": camiones}
+    except Exception as e:
+        return {"error": f"Error al obtener camiones en ruta: {str(e)}"}
+
+
+def services_registrar_peso(patente: str, peso_bruto: float):
+    """Registra el peso bruto de un camión en la subcolección registros_diarios.
+    Usa la fecha actual como ID del documento (un registro por día)."""
+    try:
+        camion_ref = camiones_ref.document(patente)
+
+        if not camion_ref.get().exists:
+            return {"error": "Camión no encontrado"}
+
+        from datetime import datetime, timezone
+
+        ahora = datetime.now(timezone.utc)
+        fecha_id = ahora.strftime("%Y-%m-%d")
+
+        registro = {
+            "peso_bruto": peso_bruto,
+            "fecha": fecha_id,
+            "timestamp": ahora.isoformat()
+        }
+
+        # Guardar en subcolección registros_diarios del camión
+        camion_ref.collection("registros_diarios").document(fecha_id).set(registro)
+
+        return {
+            "mensaje": "Peso bruto registrado correctamente",
+            "registro": registro
+        }
+    except Exception as e:
+        return {"error": f"Error al registrar peso: {str(e)}"}
+
+
+def services_leer_camiones_completo():
+    """Lee todos los camiones con sus registros diarios (subcolecciones).
+    Útil para verificar que los datos de peso se almacenan correctamente."""
+    try:
+        camiones = []
+        docs = camiones_ref.stream()
+
+        for doc in docs:
+            camion_data = doc.to_dict()
+            camion_data["patente"] = doc.id
+
+            # Leer subcolección registros_diarios
+            registros = []
+            registros_docs = camiones_ref.document(doc.id).collection("registros_diarios").stream()
+            for reg_doc in registros_docs:
+                reg_data = reg_doc.to_dict()
+                reg_data["id"] = reg_doc.id
+                registros.append(reg_data)
+
+            camion_data["registros_diarios"] = registros
+            camiones.append(camion_data)
+
+        return {"camiones": camiones, "total": len(camiones)}
+    except Exception as e:
+        return {"error": f"Error al leer camiones completos: {str(e)}"}

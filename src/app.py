@@ -5,6 +5,7 @@ from routes.routes_usuarios import router as usuarios_router
 from routes.routes_camion import router as camion_router
 from routes.routes_punto import router as punto_router
 from routes.routes_ruta import router as ruta_router
+from routes.routes_ficha import router as ficha_router
 from pathlib import Path
 import os
 from dotenv import load_dotenv
@@ -28,6 +29,7 @@ app.include_router(usuarios_router)
 app.include_router(camion_router)
 app.include_router(punto_router)
 app.include_router(ruta_router)
+app.include_router(ficha_router)
 
 BASE_DIR = Path(__file__).resolve().parent
 # Limpiar la variable de entorno para forzar que load_dotenv() la refresque desde .env

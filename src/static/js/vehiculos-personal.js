@@ -339,6 +339,84 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarCamiones();
     cargarPersonal();
 
+    // =============================================
+    //  MODAL TOMAR PESO (HU-15)
+    // =============================================
+    const btnTomarPeso = document.getElementById('btn-tomar-peso');
+    const modalPeso = document.getElementById('modal-peso');
+    const selectCamion = document.getElementById('peso-camion-select');
+    const inputPesoBruto = document.getElementById('peso-bruto-input');
+    const errorPesoBruto = document.getElementById('error-peso-bruto');
+    const btnPesoCancelar = document.getElementById('modal-peso-cancelar');
+    const btnPesoConfirmar = document.getElementById('modal-peso-confirmar');
+
+    // Abrir modal y cargar camiones en ruta
+    btnTomarPeso.addEventListener('click', async () => {
+        modalPeso.classList.add('visible');
+        inputPesoBruto.value = '';
+        inputPesoBruto.classList.remove('error');
+        errorPesoBruto.classList.remove('visible');
+
+        // Poblar select con camiones en ruta
+        selectCamion.innerHTML = '<option value="" disabled selected>Cargando camiones...</option>';
+        const camiones = await CamionesService.obtenerEnRuta();
+
+        if (camiones.length === 0) {
+            selectCamion.innerHTML = '<option value="" disabled selected>No hay camiones disponibles</option>';
+        } else {
+            selectCamion.innerHTML = '<option value="" disabled selected>Seleccione un camión</option>';
+            camiones.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.patente;
+                opt.textContent = `${c.patente} — ${c.capacidad} kg (${c.estado_mantencion})`;
+                selectCamion.appendChild(opt);
+            });
+        }
+    });
+
+    // Cancelar modal peso
+    btnPesoCancelar.addEventListener('click', () => {
+        modalPeso.classList.remove('visible');
+    });
+
+    // Confirmar registro de peso
+    btnPesoConfirmar.addEventListener('click', async () => {
+        const patente = selectCamion.value;
+        const pesoBruto = parseFloat(inputPesoBruto.value);
+
+        // Validar selección de camión
+        if (!patente) {
+            showToast('Seleccione un camión', 'error');
+            return;
+        }
+
+        // Validar peso
+        if (isNaN(pesoBruto) || pesoBruto <= 0) {
+            inputPesoBruto.classList.add('error');
+            errorPesoBruto.classList.add('visible');
+            return;
+        }
+        inputPesoBruto.classList.remove('error');
+        errorPesoBruto.classList.remove('visible');
+
+        // Deshabilitar botón mientras registra
+        btnPesoConfirmar.disabled = true;
+        btnPesoConfirmar.innerHTML = '<svg class="animate-spin" fill="none" viewBox="0 0 24 24" width="16" height="16"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Registrando...';
+
+        const resultado = await CamionesService.registrarPeso(patente, pesoBruto);
+
+        btnPesoConfirmar.disabled = false;
+        btnPesoConfirmar.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Registrar Peso';
+
+        if (resultado.error) {
+            showToast(resultado.error, 'error');
+            return;
+        }
+
+        showToast(`Peso bruto registrado: ${pesoBruto} kg — Camión ${patente}`, 'success');
+        modalPeso.classList.remove('visible');
+    });
+
     // ========== ANIMACIÓN SPIN (CSS inline para el spinner) ==========
     const style = document.createElement('style');
     style.textContent = `
