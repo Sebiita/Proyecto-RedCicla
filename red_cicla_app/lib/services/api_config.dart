@@ -36,6 +36,10 @@ class ApiConfig {
   /// Obtiene un camión por patente: GET /camiones/obtener/{patente}
   static String camionesObtener(String patente) => '/camiones/obtener/$patente';
 
+  // ── Endpoints de Reportes ────────────────────────────────────
+  /// Reporte de rendimiento: GET /reportes/rendimiento
+  static const String reportesRendimiento = '/reportes/rendimiento';
+
   // ── Endpoints de Usuarios ────────────────────────────────────
   /// Login: POST /usuarios/login
   static const String usuariosLogin = '/usuarios/login';

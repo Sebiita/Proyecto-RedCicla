@@ -1,0 +1,228 @@
+/* ============================================================
+   RedCicla — Reportes de Rendimiento (reportes.css)
+   ============================================================ */
+
+.reportes-content {
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ========== FILTROS ========== */
+.reportes-filtros {
+    background: #fff;
+    border: 1px solid var(--rc-gray-200);
+    border-radius: var(--rc-radius-xl);
+    padding: 1.5rem;
+    box-shadow: var(--rc-shadow);
+}
+
+.reportes-filtros .form-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rc-gray-900);
+    margin: 0 0 1rem 0;
+}
+
+.reportes-filtros .form-title svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--rc-green-600);
+}
+
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.reportes-filtros .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.reportes-filtros label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--rc-gray-700);
+}
+
+.reportes-filtros input {
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--rc-gray-300);
+    border-radius: var(--rc-radius-lg);
+    font-size: 0.875rem;
+    color: var(--rc-gray-800);
+    background: #fff;
+    outline: none;
+    transition: border-color var(--rc-transition), box-shadow var(--rc-transition);
+}
+
+.reportes-filtros input:focus {
+    border-color: var(--rc-green-500);
+    box-shadow: 0 0 0 3px var(--rc-green-100);
+}
+
+.filtros-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.filtros-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ========== CARDS DE MÉTRICAS ========== */
+.reportes-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.metric-card-wide {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, var(--rc-green-600), var(--rc-green-500));
+    color: #fff;
+}
+
+.metric-card-wide .metric-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.metric-card-wide .metric-value {
+    color: #fff;
+}
+
+.metric-card {
+    background: #fff;
+    border: 1px solid var(--rc-gray-200);
+    border-radius: var(--rc-radius-xl);
+    padding: 1.25rem;
+    box-shadow: var(--rc-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--rc-gray-500);
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--rc-gray-900);
+}
+
+/* ========== SECCIONES ========== */
+.reportes-seccion {
+    background: #fff;
+    border: 1px solid var(--rc-gray-200);
+    border-radius: var(--rc-radius-xl);
+    padding: 1.5rem;
+    box-shadow: var(--rc-shadow);
+}
+
+.reportes-seccion h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rc-gray-900);
+    margin: 0 0 1rem 0;
+}
+
+/* ========== ESTADOS GRID ========== */
+.estados-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.estado-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem;
+    border-radius: var(--rc-radius-lg);
+    background: var(--rc-gray-50);
+    border: 1px solid var(--rc-gray-200);
+}
+
+.estado-card .estado-nombre {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--rc-gray-600);
+}
+
+.estado-card .estado-cantidad {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--rc-gray-900);
+}
+
+/* ========== TABLAS ========== */
+.reportes-table-wrapper {
+    overflow-x: auto;
+}
+
+.reportes-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.reportes-table th,
+.reportes-table td {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--rc-gray-200);
+}
+
+.reportes-table th {
+    background: var(--rc-gray-50);
+    color: var(--rc-gray-700);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.reportes-table tbody tr:hover {
+    background: var(--rc-gray-50);
+}
+
+.reportes-table td {
+    color: var(--rc-gray-800);
+}
+
+.reportes-table .text-right {
+    text-align: right;
+}
+
+.reportes-empty {
+    color: var(--rc-gray-500);
+    font-size: 0.875rem;
+    padding: 1rem 0;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+    .filtros-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reportes-cards {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .filtros-actions {
+        flex-direction: column;
+    }
+}

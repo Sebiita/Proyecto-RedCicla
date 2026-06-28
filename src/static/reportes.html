@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes de Rendimiento - RedCicla Admin</title>
+    <meta name="description" content="Módulo de reportes de rendimiento del panel de administración de RedCicla.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/reportes.css">
+</head>
+
+<body class="admin-layout">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="admin-sidebar">
+        <a href="landing.html" class="sidebar-logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            Admin Panel
+        </a>
+        <nav class="sidebar-nav">
+            <a href="landing.html">Dashboard Global</a>
+            <a href="puntos-mapa.html">Mapa de Puntos</a>
+            <a href="puntos-registro.html">Registrar Puntos</a>
+            <a href="#">Rutas de Recolección</a>
+            <a href="vehiculos-personal.html">Vehículos &amp; Personal</a>
+            <a href="reportes.html" class="active">Reportes</a>
+        </nav>
+    </aside>
+
+    <!-- ========== CONTENIDO PRINCIPAL ========== -->
+    <main class="admin-main">
+
+        <!-- Header -->
+        <header class="admin-header">
+            <h1>Reportes de Rendimiento</h1>
+            <div class="header-user">
+                <span>...</span>
+                <button class="btn-salir" id="btn-salir">Salir</button>
+            </div>
+        </header>
+
+        <!-- Contenido -->
+        <div class="admin-content reportes-content">
+
+            <!-- ===== FILTROS ===== -->
+            <div class="reportes-filtros">
+                <h2 class="form-title">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                        </path>
+                    </svg>
+                    Filtros
+                </h2>
+                <div class="filtros-grid">
+                    <div class="form-group">
+                        <label for="filtro-fecha-inicio">Fecha inicio</label>
+                        <input type="date" id="filtro-fecha-inicio">
+                    </div>
+                    <div class="form-group">
+                        <label for="filtro-fecha-fin">Fecha fin</label>
+                        <input type="date" id="filtro-fecha-fin">
+                    </div>
+                    <div class="form-group">
+                        <label for="filtro-camion">Camión</label>
+                        <input type="text" id="filtro-camion" placeholder="Ej: TEST-01">
+                    </div>
+                    <div class="form-group">
+                        <label for="filtro-chofer">Chofer</label>
+                        <input type="email" id="filtro-chofer" placeholder="Ej: chofer@redcicla.cl">
+                    </div>
+                </div>
+                <div class="filtros-actions">
+                    <button class="btn-primary" id="btn-generar-reporte">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        Generar Reporte
+                    </button>
+                    <button class="btn-secondary" id="btn-limpiar-filtros">Limpiar</button>
+                </div>
+            </div>
+
+            <!-- ===== MÉTRICAS GENERALES ===== -->
+            <div class="reportes-cards" id="reportes-cards">
+                <div class="metric-card">
+                    <span class="metric-label">Total Rutas</span>
+                    <span class="metric-value" id="metric-total-rutas">-</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Peso Total Recogido</span>
+                    <span class="metric-value" id="metric-peso-total">-</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Peso Promedio por Ruta</span>
+                    <span class="metric-value" id="metric-peso-promedio">-</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Rutas Finalizadas</span>
+                    <span class="metric-value" id="metric-rutas-finalizadas">-</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Tiempo Total</span>
+                    <span class="metric-value" id="metric-tiempo-total">-</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Distancia Total</span>
+                    <span class="metric-value" id="metric-distancia-total">-</span>
+                </div>
+                <div class="metric-card metric-card-wide">
+                    <span class="metric-label">Eficiencia (kg / km)</span>
+                    <span class="metric-value" id="metric-eficiencia">-</span>
+                </div>
+            </div>
+
+            <!-- ===== RUTAS POR ESTADO ===== -->
+            <div class="reportes-seccion">
+                <h2>Rutas por Estado</h2>
+                <div class="estados-grid" id="estados-grid">
+                    <!-- Renderizado por JS -->
+                </div>
+            </div>
+
+            <!-- ===== RENDIMIENTO POR CAMIÓN ===== -->
+            <div class="reportes-seccion">
+                <h2>Rendimiento por Camión</h2>
+                <div class="reportes-table-wrapper" id="tabla-camiones">
+                    <!-- Renderizado por JS -->
+                </div>
+            </div>
+
+            <!-- ===== EFICIENCIA POR CONDUCTOR ===== -->
+            <div class="reportes-seccion">
+                <h2>Eficiencia por Conductor</h2>
+                <div class="reportes-table-wrapper" id="tabla-conductores">
+                    <!-- Renderizado por JS -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ========== CONTENEDOR TOASTS ========== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script src="js/common.js"></script>
+    <script src="js/reportes.js"></script>
+</body>
+
+</html>
