@@ -96,8 +96,13 @@ open_frontend() {
 }
 
 pick_flutter_device() {
-  # Forzar el fallback directo ya que flatpak no leerá la lista dinámica interna sin escalado total
-  printf '%s\n' "emulator-5554"
+  # Si el usuario define FLUTTER_DEVICE, lo usamos
+  if [[ -n "${FLUTTER_DEVICE:-}" ]]; then
+    printf '%s\n' "-d $FLUTTER_DEVICE"
+  else
+    # De lo contrario, no pasamos -d para que Flutter use el dispositivo USB conectado automáticamente
+    printf '%s\n' ""
+  fi
 }
 run_flutter_app() {
   log "Resolviendo dependencias Flutter..."
@@ -133,17 +138,17 @@ EOF
   fi
   # -------------------------------------------------------------
 
-  local device_id
-  device_id="$(pick_flutter_device)"
-  log "Ejecutando app Flutter en dispositivo: $device_id"
+  local device_flag
+  device_flag="$(pick_flutter_device)"
+  log "Ejecutando app Flutter en tu teléfono/dispositivo conectado..."
 
   cd "$FLUTTER_DIR"
   
-  # Como ya inyectamos la clave en strings.xml, corremos el comando normal sin flags complejos
+  # Como ya inyectamos la clave en strings.xml, corremos el comando normal
   if [[ -f /.flatpak-info ]]; then
-    exec flatpak-spawn --host --env=PATH="$PATH" "$HOME/development/flutter/bin/flutter" run -d "$device_id" --dds-port 8010
+    exec flatpak-spawn --host --env=PATH="$PATH" "$HOME/development/flutter/bin/flutter" run $device_flag --dds-port 8010
   else
-    flutter run -d "$device_id"
+    flutter run $device_flag
   fi
 }
 

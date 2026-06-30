@@ -203,6 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 builder: (_) => MapaScreen(
                   puntosDeReciclaje: _puntos,
                   polylineCodificada: _ruta!['polyline']?.toString(),
+                  puntosOrdenados: _ruta!['puntos_ordenados'] != null ? List<String>.from(_ruta!['puntos_ordenados']) : null,
                 ),
               ),
             );
