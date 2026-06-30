@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 
 class MapaScreen extends StatefulWidget {
   final List<Map<String, dynamic>> puntosDeReciclaje;
+  final String? polylineCodificada;
 
-  const MapaScreen({super.key, required this.puntosDeReciclaje});
+  const MapaScreen({
+    super.key,
+    required this.puntosDeReciclaje,
+    this.polylineCodificada,
+  });
 
   @override
   State<MapaScreen> createState() => _MapaScreenState();
@@ -12,6 +18,7 @@ class MapaScreen extends StatefulWidget {
 
 class _MapaScreenState extends State<MapaScreen> {
   final Set<Marker> _marcadores = {};
+  final Set<Polyline> _polylines = {};
   late CameraPosition _posicionInicial;
   bool _tieneCoordenadasValidas = false;
 
@@ -19,6 +26,9 @@ class _MapaScreenState extends State<MapaScreen> {
   void initState() {
     super.initState();
     _procesarPuntosYMarcadores();
+    if (widget.polylineCodificada != null && widget.polylineCodificada!.isNotEmpty) {
+      _decodificarPolyline();
+    }
   }
 
   void _procesarPuntosYMarcadores() {
@@ -27,7 +37,6 @@ class _MapaScreenState extends State<MapaScreen> {
 
     if (widget.puntosDeReciclaje.isNotEmpty) {
       for (var punto in widget.puntosDeReciclaje) {
-        // Obtenemos latitud y longitud asegurando que se procesen como double
         final double? lat = double.tryParse(punto['latitud']?.toString() ?? '');
         final double? lng = double.tryParse(punto['longitud']?.toString() ?? '');
         final String id = punto['id']?.toString() ?? UniqueKey().toString();
@@ -36,13 +45,11 @@ class _MapaScreenState extends State<MapaScreen> {
 
         if (lat != null && lng != null) {
           if (!_tieneCoordenadasValidas) {
-            // Centramos la cámara en el primer punto válido que encontremos
             latInicial = lat;
             lngInicial = lng;
             _tieneCoordenadasValidas = true;
           }
 
-          // Añadimos el pin al Set de marcadores de Google Maps
           _marcadores.add(
             Marker(
               markerId: MarkerId(id),
@@ -60,8 +67,31 @@ class _MapaScreenState extends State<MapaScreen> {
 
     _posicionInicial = CameraPosition(
       target: LatLng(latInicial, lngInicial),
-      zoom: 14.0, // Nivel de zoom de calle/barrio
+      zoom: 14.0,
     );
+  }
+
+  void _decodificarPolyline() {
+    PolylinePoints polylinePoints = PolylinePoints();
+    List<PointLatLng> result = polylinePoints.decodePolyline(widget.polylineCodificada!);
+    
+    if (result.isNotEmpty) {
+      List<LatLng> polylineCoordinates = [];
+      for (var point in result) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      }
+
+      setState(() {
+        _polylines.add(
+          Polyline(
+            polylineId: const PolylineId('ruta_actual'),
+            color: Colors.blue,
+            points: polylineCoordinates,
+            width: 5,
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -75,6 +105,7 @@ class _MapaScreenState extends State<MapaScreen> {
       body: GoogleMap(
         initialCameraPosition: _posicionInicial,
         markers: _marcadores,
+        polylines: _polylines,
         mapType: MapType.normal,
         myLocationButtonEnabled: true,
         compassEnabled: true,

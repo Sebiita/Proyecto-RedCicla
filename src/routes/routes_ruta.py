@@ -15,7 +15,8 @@ router = APIRouter(prefix="/rutas", tags=["rutas"])
 def crear_ruta(ruta: RutaCrear):
     return services_crear_ruta(ruta.fecha.isoformat(), ruta.camion_asignado,
                               ruta.chofer_asignado, ruta.ayudante_asignado,
-                              ruta.puntos, ruta.estado)
+                              ruta.puntos, ruta.estado,
+                              ruta.polyline, ruta.puntos_ordenados)
 
 
 @router.get("/listar")
@@ -34,7 +35,8 @@ def actualizar_ruta(ruta_id: str, ruta: RutaActualizar):
     fecha_str = ruta.fecha.isoformat() if ruta.fecha else None
     return services_actualizar_ruta(ruta_id, fecha_str, ruta.camion_asignado,
                                    ruta.chofer_asignado, ruta.ayudante_asignado,
-                                   ruta.puntos, ruta.estado)
+                                   ruta.puntos, ruta.estado,
+                                   ruta.polyline, ruta.puntos_ordenados)
 
 
 @router.delete("/eliminar/{ruta_id}")

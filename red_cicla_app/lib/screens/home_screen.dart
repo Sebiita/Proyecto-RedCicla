@@ -7,6 +7,7 @@ import '../services/ficha_service.dart';
 import 'ficha_screen.dart';
 import 'estadistica_screen.dart';
 import 'login_screen.dart';
+import 'mapa_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   /// Datos del usuario logueado, recibidos desde LoginScreen.
@@ -27,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? _ruta;
   List<Map<String, dynamic>> _puntos = [];
   Map<String, dynamic>? _camion;
+  List<Map<String, dynamic>> _todasLasRutas = [];
 
   // ── Navegación del BottomNavigationBar ───────────────────────
   int _tabActual = 0;
@@ -46,15 +48,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final correo = widget.usuario['correo']?.toString() ?? '';
+      final esAdmin = widget.usuario['rol'] == 'Administrador';
 
-      // 1. Obtener la ruta asignada al usuario de hoy
-      final ruta = await RutaService.obtenerRutaDelUsuario(correo);
+      Map<String, dynamic>? ruta;
+
+      if (esAdmin) {
+        final rutas = await RutaService.obtenerTodasLasRutas();
+        if (rutas.isNotEmpty) {
+          _todasLasRutas = rutas;
+          ruta = rutas.first;
+        }
+      } else {
+        // 1. Obtener la ruta asignada al usuario de hoy
+        ruta = await RutaService.obtenerRutaDelUsuario(correo);
+      }
+      
       if (!mounted) return;
 
       if (ruta == null) {
         setState(() {
           _cargando = false;
-          _errorCarga = 'No tienes una ruta asignada para hoy.';
+          _errorCarga = esAdmin ? 'No hay rutas disponibles.' : 'No tienes una ruta asignada para hoy.';
         });
         return;
       }
@@ -143,6 +157,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String get _estadoRuta => _ruta?['estado']?.toString() ?? 'Pendiente';
 
+  Future<void> _cambiarRutaSeleccionada(Map<String, dynamic> nuevaRuta) async {
+    setState(() {
+      _cargando = true;
+    });
+
+    try {
+      final puntosIds = List<dynamic>.from(nuevaRuta['puntos'] ?? []);
+      final puntos = await PuntoService.obtenerPuntosPorIds(puntosIds);
+      final patenteCamion = nuevaRuta['camion_asignado']?.toString() ?? '';
+      Map<String, dynamic>? camion;
+      if (patenteCamion.isNotEmpty) {
+        camion = await CamionService.obtenerCamion(patenteCamion);
+      }
+      
+      if (!mounted) return;
+      setState(() {
+        _ruta = nuevaRuta;
+        _puntos = puntos;
+        _camion = camion;
+        _cargando = false;
+      });
+    } catch (e) {
+      setState(() {
+        _cargando = false;
+      });
+    }
+  }
+
   // ── Build ─────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -154,9 +196,21 @@ class _HomeScreenState extends State<HomeScreen> {
       // ── FAB Mapa ─────────────────────────────────────────────
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Mapa próximamente disponible')),
-          );
+          if (_ruta != null && _puntos.isNotEmpty) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MapaScreen(
+                  puntosDeReciclaje: _puntos,
+                  polylineCodificada: _ruta!['polyline']?.toString(),
+                ),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No hay ruta o puntos disponibles')),
+            );
+          }
         },
         backgroundColor: Colors.blue[600],
         shape: const CircleBorder(),
@@ -226,18 +280,45 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          _cargando
-                              ? 'Cargando ruta...'
-                              : (_ruta != null
-                                  ? 'Ruta: ${_ruta!['fecha'] ?? 'Hoy'}'
-                                  : 'Sin ruta asignada'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: widget.usuario['rol'] == 'Administrador' && _todasLasRutas.isNotEmpty && !_cargando
+                            ? DropdownButton<String>(
+                                value: _ruta!['id']?.toString(),
+                                isExpanded: true,
+                                dropdownColor: Colors.green[700],
+                                icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                                underline: const SizedBox(),
+                                items: _todasLasRutas.map((r) {
+                                  return DropdownMenuItem<String>(
+                                    value: r['id'].toString(),
+                                    child: Text(
+                                      'Ruta: ${r['fecha']} - ${r['camion_asignado']}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    final seleccionada = _todasLasRutas.firstWhere((r) => r['id'].toString() == val);
+                                    _cambiarRutaSeleccionada(seleccionada);
+                                  }
+                                },
+                              )
+                            : Text(
+                                _cargando
+                                    ? 'Cargando ruta...'
+                                    : (_ruta != null
+                                        ? 'Ruta: ${_ruta!['fecha'] ?? 'Hoy'}'
+                                        : 'Sin ruta asignada'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                       // Botón Sincronizar Fichas
                       if (!_cargando)

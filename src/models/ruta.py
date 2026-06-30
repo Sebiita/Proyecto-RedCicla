@@ -11,6 +11,8 @@ class RutaBase(BaseModel):
     ayudante_asignado: str = Field(..., description="Correo del usuario ayudante asignado")
     puntos: List[str] = Field(..., description="Lista de IDs de puntos a visitar")
     estado: str = Field(default="Pendiente", description="Estado de la ruta (Pendiente, En curso, Finalizada)")
+    polyline: Optional[str] = Field(default=None, description="Polyline codificada de Google Maps")
+    puntos_ordenados: Optional[List[str]] = Field(default=None, description="Orden optimizado de los IDs de los puntos")
 
 
 class RutaCrear(RutaBase):
@@ -24,6 +26,8 @@ class RutaActualizar(BaseModel):
     ayudante_asignado: Optional[str] = None
     puntos: Optional[List[str]] = None
     estado: Optional[str] = None
+    polyline: Optional[str] = None
+    puntos_ordenados: Optional[List[str]] = None
 
 
 class RutaRespuesta(RutaBase):

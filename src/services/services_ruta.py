@@ -2,7 +2,8 @@ from data.database import db, rutas_ref
 
 
 def services_crear_ruta(fecha: str, camion_asignado: str, chofer_asignado: str, 
-                       ayudante_asignado: str, puntos: list, estado: str = "Pendiente"):
+                       ayudante_asignado: str, puntos: list, estado: str = "Pendiente",
+                       polyline: str = None, puntos_ordenados: list = None):
     """Crea una nueva ruta"""
     try:
         nueva_ruta = {
@@ -13,6 +14,10 @@ def services_crear_ruta(fecha: str, camion_asignado: str, chofer_asignado: str,
             "puntos": puntos,
             "estado": estado
         }
+        if polyline is not None:
+            nueva_ruta["polyline"] = polyline
+        if puntos_ordenados is not None:
+            nueva_ruta["puntos_ordenados"] = puntos_ordenados
         
         # Firestore genera automáticamente el ID
         doc_ref = rutas_ref.document()
@@ -62,7 +67,8 @@ def services_leer_todas_rutas():
 
 def services_actualizar_ruta(ruta_id: str, fecha: str = None, camion_asignado: str = None,
                             chofer_asignado: str = None, ayudante_asignado: str = None,
-                            puntos: list = None, estado: str = None):
+                            puntos: list = None, estado: str = None,
+                            polyline: str = None, puntos_ordenados: list = None):
     """Actualiza datos de una ruta"""
     try:
         ruta_ref = rutas_ref.document(ruta_id)
@@ -83,6 +89,10 @@ def services_actualizar_ruta(ruta_id: str, fecha: str = None, camion_asignado: s
             actualizaciones["puntos"] = puntos
         if estado:
             actualizaciones["estado"] = estado
+        if polyline is not None:
+            actualizaciones["polyline"] = polyline
+        if puntos_ordenados is not None:
+            actualizaciones["puntos_ordenados"] = puntos_ordenados
         
         if actualizaciones:
             ruta_ref.update(actualizaciones)
