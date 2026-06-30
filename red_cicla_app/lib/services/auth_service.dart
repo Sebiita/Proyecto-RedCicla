@@ -14,20 +14,15 @@ import 'api_config.dart';
 class AuthService {
   // ── Singleton de sesión en memoria ───────────────────────────
   static Map<String, dynamic>? _usuarioActual;
-  static String? _accessToken;
 
   /// Datos del usuario actualmente logueado. Null si no hay sesión.
   static Map<String, dynamic>? get usuarioActual => _usuarioActual;
-
-  /// Token JWT de acceso del usuario logueado. Null si no hay sesión.
-  static String? get accessToken => _accessToken;
 
   /// True si hay un usuario logueado en memoria.
   static bool get estaLogueado => _usuarioActual != null;
 
   // ── Claves para SharedPreferences ────────────────────────────
   static const String _keyUsuario = 'usuario_sesion';
-  static const String _keyToken = 'access_token';
 
   // ══════════════════════════════════════════════════════════════
   // LOGIN
@@ -63,12 +58,11 @@ class AuthService {
       if (response.statusCode == 200 && data['usuario'] != null) {
         // Login exitoso
         _usuarioActual = Map<String, dynamic>.from(data['usuario']);
-        _accessToken = data['access_token']?.toString();
         debugPrint('✅ Login exitoso: ${_usuarioActual!['correo']}');
 
         // Persistir sesión si "Recordarme" está activo
         if (recordarme) {
-          await _guardarSesion(_usuarioActual!, token: _accessToken);
+          await _guardarSesion(_usuarioActual!);
         }
 
         return {'exito': true, 'usuario': _usuarioActual};
@@ -91,17 +85,11 @@ class AuthService {
   // PERSISTENCIA DE SESIÓN
   // ══════════════════════════════════════════════════════════════
 
-  /// Guarda los datos del usuario y el token JWT en SharedPreferences.
-  static Future<void> _guardarSesion(
-    Map<String, dynamic> usuario, {
-    String? token,
-  }) async {
+  /// Guarda los datos del usuario en SharedPreferences.
+  static Future<void> _guardarSesion(Map<String, dynamic> usuario) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyUsuario, jsonEncode(usuario));
-      if (token != null && token.isNotEmpty) {
-        await prefs.setString(_keyToken, token);
-      }
       debugPrint('💾 Sesión guardada en disco');
     } catch (e) {
       debugPrint('⚠️ No se pudo guardar sesión: $e');
@@ -114,10 +102,8 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final sesionJson = prefs.getString(_keyUsuario);
-      final token = prefs.getString(_keyToken);
       if (sesionJson != null) {
         _usuarioActual = Map<String, dynamic>.from(jsonDecode(sesionJson));
-        _accessToken = token;
         debugPrint('🔄 Sesión restaurada: ${_usuarioActual!['correo']}');
         return true;
       }
@@ -134,11 +120,9 @@ class AuthService {
   /// Cierra la sesión: borra datos en memoria y en SharedPreferences.
   static Future<void> cerrarSesion() async {
     _usuarioActual = null;
-    _accessToken = null;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_keyUsuario);
-      await prefs.remove(_keyToken);
       debugPrint('👋 Sesión cerrada');
     } catch (e) {
       debugPrint('⚠️ Error al limpiar sesión guardada: $e');

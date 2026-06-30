@@ -13,8 +13,6 @@ from services.services_usuario import (
     services_leer_todos_usuarios,
     services_leer_usuario,
 )
-from auth.security import crear_token_acceso
-
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 
@@ -53,25 +51,9 @@ def routes_actualizar_usuario(correo: str, usuario: UsuarioActualizar):
 
 @router.post("/login")
 def routes_incio_de_sesion(credenciales: UsuarioLogin):
-    resultado = services_inicio_de_sesion(
+    return services_inicio_de_sesion(
         credenciales.correo, credenciales.contraseña
     )
-
-    if "error" in resultado:
-        return resultado
-
-    usuario = resultado.get("usuario", {})
-    correo = usuario.get("correo")
-    rol = usuario.get("rol", "")
-
-    access_token = crear_token_acceso(correo, rol)
-
-    return {
-        "mensaje": "Sesión iniciada correctamente",
-        "access_token": access_token,
-        "token_type": "bearer",
-        "usuario": usuario,
-    }
 
 
 @router.delete("/eliminar")

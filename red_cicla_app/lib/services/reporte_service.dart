@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
-import 'auth_service.dart';
 
 /// Servicio para obtener el reporte de rendimiento desde el backend FastAPI.
 ///
@@ -44,29 +43,13 @@ class ReporteService {
 
       debugPrint('📊 Consultando reporte: $url');
 
-      final headers = <String, String>{'Content-Type': 'application/json'};
-      final token = AuthService.accessToken;
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      final response = await http
-          .get(url, headers: headers)
-          .timeout(const Duration(seconds: 15));
+      final response = await http.get(url).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes))
             as Map<String, dynamic>;
         debugPrint('✅ Reporte de rendimiento obtenido');
         return data;
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        debugPrint('🔒 Acceso denegado al reporte: ${response.statusCode}');
-        debugPrint('Body: ${response.body}');
-        return <String, dynamic>{
-          '_error_auth': true,
-          '_status_code': response.statusCode,
-          '_mensaje': 'No tienes permisos para ver este reporte.',
-        };
       } else {
         debugPrint('❌ Error al obtener reporte: ${response.statusCode}');
         debugPrint('Body: ${response.body}');
