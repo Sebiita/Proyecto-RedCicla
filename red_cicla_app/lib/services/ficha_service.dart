@@ -40,7 +40,7 @@ class FichaService {
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(ficha),
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 2));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         debugPrint('✅ Ficha enviada al servidor exitosamente');
@@ -63,7 +63,7 @@ class FichaService {
   static Future<List<Map<String, dynamic>>> obtenerFichasPorRuta(String rutaId) async {
     try {
       final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.fichasPorRuta(rutaId)}');
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      final response = await http.get(url).timeout(const Duration(seconds: 2));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
