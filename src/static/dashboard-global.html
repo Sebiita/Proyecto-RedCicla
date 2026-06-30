@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Global — RedCicla Admin</title>
+    <meta name="description" content="Panel de monitoreo en tiempo real del avance de recolección de puntos de reciclaje por ruta. RedCicla Admin.">
+
+    <!-- Tailwind CDN (solo desarrollo) -->
+    <script>
+        (function () {
+            const host = window.location.hostname;
+            if (host === '127.0.0.1' || host === 'localhost') {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.tailwindcss.com';
+                s.defer = true;
+                document.head.appendChild(s);
+            } else {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '/static/css/tailwind.css';
+                document.head.appendChild(link);
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/dashboard-global.css">
+</head>
+
+<body class="admin-layout">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="admin-sidebar">
+        <a href="landing.html" class="sidebar-logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            Admin Panel
+        </a>
+        <nav class="sidebar-nav">
+            <a href="dashboard-global.html" class="active">Dashboard Global</a>
+            <a href="puntos-mapa.html">Mapa de Puntos</a>
+            <a href="puntos-registro.html">Registrar Puntos</a>
+            <a href="rutas-recoleccion.html">Rutas de Recolección</a>
+            <a href="vehiculos-personal.html">Vehículos &amp; Personal</a>
+            <a href="#">Informes</a>
+        </nav>
+    </aside>
+
+    <!-- ========== CONTENIDO PRINCIPAL ========== -->
+    <main class="admin-main">
+
+        <!-- Header -->
+        <header class="admin-header">
+            <h1>Dashboard Global</h1>
+            <div class="header-user">
+                <span>...</span>
+                <button class="btn-salir" id="btn-salir">Salir</button>
+            </div>
+        </header>
+
+        <!-- Contenido -->
+        <div class="dash-content">
+
+            <!-- ===== BARRA SUPERIOR ===== -->
+            <div class="dash-top-bar">
+                <h2>
+                    Rutas de hoy
+                    <span class="dash-fecha" id="dash-fecha">—</span>
+                </h2>
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                    <div class="dash-auto-label">
+                        <div class="dash-auto-dot"></div>
+                        Auto-refresh en <strong id="refresh-countdown">30s</strong>
+                    </div>
+                    <button class="dash-refresh-btn" id="btn-refresh" title="Actualizar ahora">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===== KPI CARDS ===== -->
+            <div class="dash-kpi-grid" id="kpi-grid">
+
+                <!-- Rutas hoy -->
+                <div class="kpi-card">
+                    <div class="kpi-icon blue">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h-3m3 0h2m-2 0V6m0 0h4l3 5v5a1 1 0 01-1 1h-1"/>
+                        </svg>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpi-rutas">—</div>
+                        <div class="kpi-label">Rutas del día</div>
+                    </div>
+                </div>
+
+                <!-- Puntos totales -->
+                <div class="kpi-card">
+                    <div class="kpi-icon gray">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpi-total">—</div>
+                        <div class="kpi-label">Puntos programados</div>
+                    </div>
+                </div>
+
+                <!-- Completados -->
+                <div class="kpi-card">
+                    <div class="kpi-icon green">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpi-completados">—</div>
+                        <div class="kpi-label">Completados</div>
+                    </div>
+                </div>
+
+                <!-- En espera -->
+                <div class="kpi-card">
+                    <div class="kpi-icon yellow">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpi-espera">—</div>
+                        <div class="kpi-label">En espera</div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- /kpi-grid -->
+
+            <!-- ===== BARRA DE PROGRESO GLOBAL ===== -->
+            <div class="dash-progress-global">
+                <div class="dash-progress-global-header">
+                    <span>Avance global de recolección</span>
+                    <span class="dash-progress-global-pct" id="dash-pct-global">0%</span>
+                </div>
+                <div class="dash-progress-bar-bg">
+                    <div class="dash-progress-bar-fill" id="dash-bar-global" style="width:0%"></div>
+                </div>
+                <p style="margin:0.5rem 0 0;font-size:0.8125rem;color:var(--rc-gray-500)" id="dash-progress-desc">
+                    Cargando datos...
+                </p>
+            </div>
+
+            <!-- ===== LISTA DE RUTAS ===== -->
+            <div class="dash-rutas-section">
+                <div class="dash-rutas-title">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    Detalle por ruta
+                </div>
+
+                <!-- Rutas renderizadas dinámicamente -->
+                <div id="rutas-container">
+                    <!-- skeleton placeholder -->
+                </div>
+            </div>
+
+            <!-- Timestamp -->
+            <div class="dash-last-update" id="last-update">Cargando...</div>
+
+        </div>
+        <!-- /dash-content -->
+    </main>
+
+    <!-- ========== TOASTS ========== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script src="js/dashboard-global-service.js"></script>
+    <script src="js/dashboard-global.js"></script>
+
+    <script>
+        // Botón salir (comportamiento compartido con otros paneles)
+        document.getElementById('btn-salir')?.addEventListener('click', () => {
+            window.location.href = 'login.html';
+        });
+    </script>
+
+</body>
+
+</html>
