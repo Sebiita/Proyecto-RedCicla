@@ -1,0 +1,319 @@
+/* ============================================================
+   RedCicla — Estilos Rutas de Recolección (rutas-recoleccion.css)
+   Pantalla de gestión y asignación de rutas a choferes
+   ============================================================ */
+
+/* ========== LAYOUT OVERRIDE ========== */
+.admin-content.rutas-content {
+    flex-direction: column;
+}
+
+/* ========== TABS ========== */
+.rutas-tabs-container {
+    display: flex;
+    gap: 0.25rem;
+    background: var(--rc-gray-100);
+    border-radius: var(--rc-radius-lg);
+    padding: 0.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.rutas-tab-btn {
+    flex: 1;
+    padding: 0.625rem 1rem;
+    border: none;
+    border-radius: var(--rc-radius);
+    background: transparent;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--rc-gray-500);
+    cursor: pointer;
+    transition: background var(--rc-transition), color var(--rc-transition), box-shadow var(--rc-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.rutas-tab-btn:hover {
+    color: var(--rc-gray-700);
+}
+
+.rutas-tab-btn.active {
+    background: #fff;
+    color: var(--rc-green-700);
+    box-shadow: var(--rc-shadow-sm);
+}
+
+.rutas-tab-btn svg {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.rutas-tab-content {
+    display: none;
+}
+
+.rutas-tab-content.active {
+    display: flex;
+    gap: 1.5rem;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ========== PANEL FORMULARIO ========== */
+.rutas-panel-form {
+    width: 26rem;
+    min-width: 26rem;
+    background: #fff;
+    border-radius: var(--rc-radius-xl);
+    box-shadow: var(--rc-shadow-sm);
+    border: 1px solid var(--rc-gray-200);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* ========== PANEL TABLA ========== */
+.rutas-panel-table {
+    flex: 1;
+    background: #fff;
+    border-radius: var(--rc-radius-xl);
+    box-shadow: var(--rc-shadow-sm);
+    border: 1px solid var(--rc-gray-200);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ========== SELECTOR DE PUNTOS ========== */
+.puntos-selector {
+    max-height: 10rem;
+    overflow-y: auto;
+    border: 1px solid var(--rc-gray-300);
+    border-radius: var(--rc-radius);
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+}
+
+.puntos-selector:focus-within {
+    border-color: var(--rc-green-500);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+}
+
+.puntos-selector.error {
+    border-color: var(--rc-red-500);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.punto-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.25rem;
+    border-radius: var(--rc-radius);
+    transition: background var(--rc-transition);
+    cursor: pointer;
+}
+
+.punto-checkbox-item:hover {
+    background: var(--rc-gray-50);
+}
+
+.punto-checkbox-item input[type="checkbox"] {
+    accent-color: var(--rc-green-600);
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.punto-checkbox-item label {
+    font-size: 0.8125rem;
+    color: var(--rc-gray-700);
+    cursor: pointer;
+    user-select: none;
+    flex: 1;
+}
+
+.punto-checkbox-item .punto-urgencia {
+    font-size: 0.6875rem;
+    padding: 0.0625rem 0.375rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.puntos-selector-empty {
+    font-size: 0.8125rem;
+    color: var(--rc-gray-400);
+    text-align: center;
+    padding: 0.75rem;
+}
+
+.puntos-counter {
+    font-size: 0.75rem;
+    color: var(--rc-gray-500);
+    margin-top: 0.375rem;
+    text-align: right;
+}
+
+/* ========== BADGES DE ESTADO RUTA ========== */
+.badge-pendiente {
+    background: var(--rc-yellow-100);
+    color: var(--rc-yellow-800);
+}
+
+.badge-en-curso {
+    background: var(--rc-blue-100);
+    color: var(--rc-blue-600);
+}
+
+.badge-finalizada {
+    background: var(--rc-green-200);
+    color: var(--rc-green-800);
+}
+
+/* ========== BADGES DE URGENCIA ========== */
+.urgencia-baja {
+    background: var(--rc-gray-100);
+    color: var(--rc-gray-600);
+}
+
+.urgencia-normal {
+    background: var(--rc-green-100);
+    color: var(--rc-green-700);
+}
+
+.urgencia-alta {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.urgencia-critica {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* ========== PUNTOS EN TABLA ========== */
+.puntos-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.punto-tag {
+    display: inline-block;
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    background: var(--rc-gray-100);
+    color: var(--rc-gray-700);
+    font-weight: 500;
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ========== TABLA RUTAS ========== */
+.rutas-table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.rutas-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.rutas-table thead {
+    position: sticky;
+    top: 0;
+    background: var(--rc-gray-50);
+    z-index: 1;
+}
+
+.rutas-table th {
+    text-align: left;
+    padding: 0.75rem 0.75rem;
+    font-weight: 600;
+    color: var(--rc-gray-600);
+    border-bottom: 2px solid var(--rc-gray-200);
+    white-space: nowrap;
+}
+
+.rutas-table td {
+    padding: 0.75rem 0.75rem;
+    border-bottom: 1px solid var(--rc-gray-100);
+    color: var(--rc-gray-700);
+    vertical-align: middle;
+}
+
+.rutas-table tbody tr {
+    transition: background var(--rc-transition);
+}
+
+.rutas-table tbody tr:hover {
+    background: var(--rc-gray-50);
+}
+
+/* ========== FORM ROW 2 COL ========== */
+.rutas-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+/* ========== ESTADO VACÍO ========== */
+.rutas-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    color: var(--rc-gray-400);
+    text-align: center;
+}
+
+.rutas-empty-state svg {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.rutas-empty-state p {
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* ========== TABLE HEADER ========== */
+.rutas-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.rutas-table-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--rc-gray-900);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1100px) {
+    .rutas-tab-content.active {
+        flex-direction: column;
+    }
+
+    .rutas-panel-form {
+        width: 100%;
+        min-width: unset;
+    }
+}

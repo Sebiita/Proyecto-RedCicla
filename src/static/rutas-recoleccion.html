@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutas de Recolección - RedCicla Admin</title>
+    <meta name="description" content="Módulo de asignación de rutas de recolección a choferes del panel de administración de RedCicla.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/vehiculos-personal.css">
+    <link rel="stylesheet" href="css/rutas-recoleccion.css">
+</head>
+
+<body class="admin-layout">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="admin-sidebar">
+        <a href="landing.html" class="sidebar-logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            Admin Panel
+        </a>
+        <nav class="sidebar-nav">
+            <a href="dashboard-global.html">Dashboard Global</a>
+            <a href="puntos-mapa.html">Mapa de Puntos</a>
+            <a href="puntos-registro.html">Registrar Puntos</a>
+            <a href="rutas-recoleccion.html" class="active">Rutas de Recolección</a>
+            <a href="vehiculos-personal.html">Vehículos &amp; Personal</a>
+            <a href="#">Informes</a>
+        </nav>
+    </aside>
+
+    <!-- ========== CONTENIDO PRINCIPAL ========== -->
+    <main class="admin-main">
+
+        <!-- Header -->
+        <header class="admin-header">
+            <h1>Rutas de Recolección</h1>
+            <div class="header-user">
+                <span>...</span>
+                <button class="btn-salir" id="btn-salir">Salir</button>
+            </div>
+        </header>
+
+        <!-- Contenido -->
+        <div class="admin-content rutas-content">
+
+            <!-- ===== TABS ===== -->
+            <div class="rutas-tabs-container">
+                <button class="rutas-tab-btn active" data-tab="asignar" id="tab-btn-asignar">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
+                        </path>
+                    </svg>
+                    Asignar Ruta
+                </button>
+                <button class="rutas-tab-btn" data-tab="historial" id="tab-btn-historial">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    Historial de Rutas
+                </button>
+            </div>
+
+            <!-- ===== TAB: ASIGNAR RUTA ===== -->
+            <div class="rutas-tab-content active" id="tab-asignar">
+
+                <!-- Panel Formulario -->
+                <div class="rutas-panel-form">
+                    <h2 class="form-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Asignar Nueva Ruta
+                    </h2>
+
+                    <form id="form-ruta" novalidate>
+                        <!-- Fecha -->
+                        <div class="form-group">
+                            <label for="ruta-fecha">Fecha de Ruta *</label>
+                            <input type="date" id="ruta-fecha" name="fecha" required>
+                            <div class="error-msg" id="error-fecha">La fecha es obligatoria.</div>
+                        </div>
+
+                        <!-- Camión -->
+                        <div class="form-group">
+                            <label for="ruta-camion">Camión Asignado *</label>
+                            <select id="ruta-camion" name="camion_asignado" required>
+                                <option value="" disabled selected>Cargando camiones...</option>
+                            </select>
+                            <div class="error-msg" id="error-camion">Seleccione un camión.</div>
+                        </div>
+
+                        <!-- Chofer y Ayudante -->
+                        <div class="rutas-form-row">
+                            <div class="form-group">
+                                <label for="ruta-chofer">Chofer *</label>
+                                <select id="ruta-chofer" name="chofer_asignado" required>
+                                    <option value="" disabled selected>Cargando choferes...</option>
+                                </select>
+                                <div class="error-msg" id="error-chofer">Seleccione un chofer.</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="ruta-ayudante">Ayudante *</label>
+                                <select id="ruta-ayudante" name="ayudante_asignado" required>
+                                    <option value="" disabled selected>Cargando ayudantes...</option>
+                                </select>
+                                <div class="error-msg" id="error-ayudante">Seleccione un ayudante.</div>
+                            </div>
+                        </div>
+
+                        <!-- Puntos de Recolección -->
+                        <div class="form-group">
+                            <label>Puntos de Recolección *</label>
+                            <div class="puntos-selector" id="puntos-selector">
+                                <div class="puntos-selector-empty">Cargando puntos...</div>
+                            </div>
+                            <div class="puntos-counter" id="puntos-counter">0 puntos seleccionados</div>
+                            <div class="error-msg" id="error-puntos">Seleccione al menos un punto.</div>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="form-group">
+                            <label for="ruta-estado">Estado</label>
+                            <select id="ruta-estado" name="estado">
+                                <option value="Pendiente" selected>Pendiente</option>
+                                <option value="En curso">En curso</option>
+                                <option value="Finalizada">Finalizada</option>
+                            </select>
+                        </div>
+
+                        <!-- Botón Submit -->
+                        <button type="submit" class="btn-registrar" id="btn-asignar-ruta">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Asignar Ruta
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Panel Tabla -->
+                <div class="rutas-panel-table">
+                    <div class="rutas-table-header">
+                        <h2>Rutas Asignadas</h2>
+                        <span class="table-counter" id="contador-rutas">0 rutas</span>
+                    </div>
+                    <div class="rutas-table-wrapper" id="tabla-rutas">
+                        <!-- Tabla renderizada por JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: HISTORIAL ===== -->
+            <div class="rutas-tab-content" id="tab-historial">
+                <div class="rutas-panel-table" style="width: 100%;">
+                    <div class="rutas-table-header">
+                        <h2>Historial Completo de Rutas</h2>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span class="table-counter" id="contador-historial">0 rutas</span>
+                        </div>
+                    </div>
+                    <div class="rutas-table-wrapper" id="tabla-historial">
+                        <!-- Tabla renderizada por JS -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ========== MODAL CONFIRMACIÓN ELIMINAR ========== -->
+    <div class="modal-overlay" id="modal-eliminar">
+        <div class="modal-box">
+            <h3>¿Eliminar ruta?</h3>
+            <p id="modal-nombre-item">Esta ruta será eliminada permanentemente.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="modal-cancelar">Cancelar</button>
+                <button class="btn-danger" id="modal-confirmar" style="padding: 0.625rem 1.25rem; font-size: 0.875rem;">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== CONTENEDOR TOASTS ========== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script src="js/vehiculos-personal-service.js"></script>
+    <script src="js/puntos-service.js"></script>
+    <script src="js/rutas-service.js"></script>
+    <script src="js/rutas-recoleccion.js"></script>
+</body>
+
+</html>
