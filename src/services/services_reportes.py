@@ -1,10 +1,12 @@
-from data.database import db, rutas_ref, fichas_ref, camiones_ref, puntos_ref
+from data.database import rutas_ref, fichas_ref, camiones_ref, puntos_ref
 from datetime import datetime
 from collections import defaultdict
 import math
 
 
-def _ruta_en_periodo(ruta_data: dict, fecha_inicio: str = None, fecha_fin: str = None) -> bool:
+def _ruta_en_periodo(
+    ruta_data: dict, fecha_inicio: str = None, fecha_fin: str = None
+) -> bool:
     """Verifica si una ruta está dentro del período indicado."""
     fecha_ruta = ruta_data.get("fecha")
     if not fecha_ruta:
@@ -30,7 +32,9 @@ def _parse_timestamp(timestamp: str) -> datetime:
         return None
 
 
-def _distancia_haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+def _distancia_haversine(
+    lat1: float, lon1: float, lat2: float, lon2: float
+) -> float:
     """
     Calcula la distancia en kilómetros entre dos coordenadas GPS
     usando la fórmula de Haversine.
@@ -42,8 +46,11 @@ def _distancia_haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> 
     delta_lat = math.radians(lat2 - lat1)
     delta_lon = math.radians(lon2 - lon1)
 
-    a = (math.sin(delta_lat / 2) ** 2 +
-         math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2) ** 2)
+    cos_lat1 = math.cos(lat1_rad)
+    cos_lat2 = math.cos(lat2_rad)
+    sin_dlon = math.sin(delta_lon / 2)
+    sin_dlat = math.sin(delta_lat / 2)
+    a = sin_dlat ** 2 + cos_lat1 * cos_lat2 * sin_dlon ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return R * c
@@ -81,15 +88,16 @@ def services_generar_reporte_rendimiento(
     chofer_asignado: str = None
 ):
     """
-    Genera un reporte de rendimiento agregando datos de rutas, fichas, camiones y puntos.
+    Genera un reporte de rendimiento agregando datos de rutas, fichas,
+    camiones y puntos.
 
     Métricas incluidas:
     - Total de rutas en el período (con filtros opcionales).
     - Rutas completadas vs pendientes vs en curso.
     - Peso total recolectado desde fichas_realizadas.
     - Peso promedio por ruta.
-    - Tiempo total y promedio por ruta (en horas), calculado desde timestamps de fichas.
-    - Distancia total y promedio por ruta (en km), calculado desde coordenadas GPS.
+    - Tiempo total y promedio por ruta (en horas), calculado desde timestamps.
+    - Distancia total y promedio por ruta (en km), desde coordenadas GPS.
     - Rendimiento por camión (kilos recolectados / capacidad).
     - Eficiencia por conductor (kilos y rutas).
     """
@@ -107,9 +115,11 @@ def services_generar_reporte_rendimiento(
         for ruta in rutas:
             if not _ruta_en_periodo(ruta, fecha_inicio, fecha_fin):
                 continue
-            if camion_asignado and ruta.get("camion_asignado") != camion_asignado:
+            if camion_asignado and \
+                    ruta.get("camion_asignado") != camion_asignado:
                 continue
-            if chofer_asignado and ruta.get("chofer_asignado") != chofer_asignado:
+            if chofer_asignado and \
+                    ruta.get("chofer_asignado") != chofer_asignado:
                 continue
             rutas_filtradas.append(ruta)
 
@@ -187,7 +197,9 @@ def services_generar_reporte_rendimiento(
             # Distancia: suma de distancias entre puntos consecutivos
             puntos_ids = ruta.get("puntos", [])
             if puntos_ids:
-                distancia_total_km += _calcular_distancia_ruta(puntos_ids, puntos_data)
+                distancia_total_km += _calcular_distancia_ruta(
+                    puntos_ids, puntos_data
+                )
 
         tiempo_promedio_por_ruta_horas = (
             tiempo_total_horas / total_rutas if total_rutas > 0 else 0.0
@@ -198,7 +210,8 @@ def services_generar_reporte_rendimiento(
 
         # Eficiencia: kg por km recorrido
         eficiencia_kg_por_km = (
-            peso_total_recogido / distancia_total_km if distancia_total_km > 0 else 0.0
+            peso_total_recogido / distancia_total_km
+            if distancia_total_km > 0 else 0.0
         )
 
         # --- 6. Rendimiento por camión ---
@@ -216,7 +229,9 @@ def services_generar_reporte_rendimiento(
                 if ruta["id"] == ruta_id:
                     camion = ruta.get("camion_asignado")
                     if camion:
-                        kilos_por_camion[camion] += float(ficha.get("kilos_recogidos", 0) or 0)
+                        kilos_por_camion[camion] += float(
+                            ficha.get("kilos_recogidos", 0) or 0
+                        )
                     break
 
         # Obtener capacidades de camiones
@@ -256,7 +271,9 @@ def services_generar_reporte_rendimiento(
                 if ruta["id"] == ruta_id:
                     chofer = ruta.get("chofer_asignado")
                     if chofer:
-                        kilos_por_conductor[chofer] += float(ficha.get("kilos_recogidos", 0) or 0)
+                        kilos_por_conductor[chofer] += float(
+                            ficha.get("kilos_recogidos", 0) or 0
+                        )
                     break
 
         eficiencia_por_conductor = []
@@ -279,9 +296,13 @@ def services_generar_reporte_rendimiento(
             "peso_total_recogido_kg": round(peso_total_recogido, 2),
             "peso_promedio_por_ruta_kg": round(peso_promedio_por_ruta, 2),
             "tiempo_total_horas": round(tiempo_total_horas, 2),
-            "tiempo_promedio_por_ruta_horas": round(tiempo_promedio_por_ruta_horas, 2),
+            "tiempo_promedio_por_ruta_horas": round(
+                tiempo_promedio_por_ruta_horas, 2
+            ),
             "distancia_total_km": round(distancia_total_km, 2),
-            "distancia_promedio_por_ruta_km": round(distancia_promedio_por_ruta_km, 2),
+            "distancia_promedio_por_ruta_km": round(
+                distancia_promedio_por_ruta_km, 2
+            ),
             "eficiencia_kg_por_km": round(eficiencia_kg_por_km, 2),
             "rendimiento_por_camion": rendimiento_por_camion,
             "eficiencia_por_conductor": eficiencia_por_conductor

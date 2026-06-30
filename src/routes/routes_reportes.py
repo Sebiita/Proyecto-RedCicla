@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException, Depends
 from typing import Optional
 from datetime import date
 from models.reporte import ReporteRendimiento
 from services.services_reportes import services_generar_reporte_rendimiento
+from auth.security import requerir_admin, TokenData
 
 router = APIRouter(prefix="/reportes", tags=["reportes"])
 
@@ -24,18 +25,33 @@ def generar_reporte_rendimiento(
     chofer_asignado: Optional[str] = Query(
         None,
         description="Correo del chofer para filtrar"
-    )
+    ),
+    usuario: TokenData = Depends(requerir_admin)
 ):
     """
     Genera el reporte de rendimiento agregando rutas, fichas de recolección
     y datos de camiones. Permite filtrar por período, camión y/o chofer.
+
+    Requiere autenticación JWT y rol de administrador.
     """
+    # Validación básica de rango de fechas
+    if fecha_inicio and fecha_fin and fecha_inicio > fecha_fin:
+        raise HTTPException(
+            status_code=400,
+            detail="La fecha de inicio no puede ser mayor a la fecha de fin"
+        )
+
     fecha_inicio_str = fecha_inicio.isoformat() if fecha_inicio else None
     fecha_fin_str = fecha_fin.isoformat() if fecha_fin else None
 
-    return services_generar_reporte_rendimiento(
+    resultado = services_generar_reporte_rendimiento(
         fecha_inicio=fecha_inicio_str,
         fecha_fin=fecha_fin_str,
         camion_asignado=camion_asignado,
         chofer_asignado=chofer_asignado
     )
+
+    if "error" in resultado:
+        raise HTTPException(status_code=500, detail=resultado["error"])
+
+    return resultado

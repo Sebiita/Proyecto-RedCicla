@@ -63,6 +63,15 @@ class _ReportesRendimientoScreenState
       return;
     }
 
+    if (reporte['_error_auth'] == true) {
+      setState(() {
+        _cargando = false;
+        _error = reporte['_mensaje']?.toString() ??
+            'No tienes permisos para ver este reporte.';
+      });
+      return;
+    }
+
     setState(() {
       _reporte = reporte;
       _cargando = false;
