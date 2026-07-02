@@ -134,11 +134,27 @@ document.addEventListener('DOMContentLoaded', () => {
     async function cargarPuntosCheckboxes() {
         const container = document.getElementById('puntos-selector');
         const counter = document.getElementById('puntos-counter');
+        const selectCanton = document.getElementById('ruta-canton');
+
+        const normalizarTexto = (texto = '') => texto
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toLowerCase();
+
+        const esCanton = (punto) => {
+            const nombre = normalizarTexto(punto.municipalidad || '');
+            return nombre.startsWith('canton');
+        };
+
         try {
             const puntos = await PuntosService.obtenerActivos();
 
             if (puntos.length === 0) {
                 container.innerHTML = '<div class="puntos-selector-empty">No hay puntos activos disponibles</div>';
+                if (selectCanton) {
+                    selectCanton.innerHTML = '<option value="" selected>Selecciona un cantón</option>';
+                }
                 return;
             }
 
@@ -146,6 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
             puntos.forEach(p => {
                 puntosMap[p.id] = p.municipalidad || `Punto ${p.id}`;
             });
+
+            let htmlCantones = '<option value="" selected>Selecciona un cantón</option>';
 
             const urgenciaBadge = (urgencia) => {
                 switch (urgencia) {
@@ -164,6 +182,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="${urgenciaBadge(p.urgencia)}">${p.urgencia || 'Normal'}</span>
                 </div>
             `).join('');
+
+            puntos.forEach(p => {
+                if (esCanton(p)) {
+                    htmlCantones += `<option value="${p.id}" data-lat="${p.latitud}" data-lng="${p.longitud}">${p.municipalidad}</option>`;
+                }
+            });
+
+            if (htmlCantones === '<option value="" selected>Selecciona un cantón</option>') {
+                htmlCantones = '<option value="" selected>No se detectaron cantones</option>';
+            }
+
+            if (selectCanton) {
+                selectCanton.innerHTML = htmlCantones;
+            }
 
             // Actualizar contador al cambiar checkboxes
             container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -294,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearAllFormErrors();
 
         const fecha = document.getElementById('ruta-fecha').value;
+        const canton = document.getElementById('ruta-canton').value;
         const camion = document.getElementById('ruta-camion').value;
         const chofer = document.getElementById('ruta-chofer').value;
         const ayudante = document.getElementById('ruta-ayudante').value;
@@ -306,6 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Validaciones
         if (!fecha) {
             showError('ruta-fecha', 'error-fecha');
+            valid = false;
+        }
+        if (!canton) {
+            showError('ruta-canton', 'error-canton');
             valid = false;
         }
         if (!camion) {

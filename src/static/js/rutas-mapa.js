@@ -175,11 +175,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectCanton = document.getElementById('ruta-canton');
         let htmlPuntos = '';
         let htmlCantones = '<option value="">Selecciona un Cantón...</option>';
+
+        const normalizarTexto = (texto = '') => texto
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toLowerCase();
+
+        const esCanton = (punto) => {
+            const nombre = normalizarTexto(punto.municipalidad || '');
+            return nombre.startsWith('canton');
+        };
         
         todosLosPuntos.forEach(p => {
-            const isCanton = p.municipalidad.toLowerCase().includes('canton') || p.municipalidad.toLowerCase().includes('cantón');
-            
-            if (isCanton) {
+            if (esCanton(p)) {
                 htmlCantones += `<option value="${p.id}" data-lat="${p.latitud}" data-lng="${p.longitud}">${p.municipalidad}</option>`;
             } else {
                 htmlPuntos += `
