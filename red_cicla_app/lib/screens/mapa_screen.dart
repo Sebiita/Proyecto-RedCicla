@@ -22,27 +22,25 @@ class _MapaScreenState extends State<MapaScreen> {
   final Set<Marker> _marcadores = {};
   final Set<Polyline> _polylines = {};
   
-  // Se cambia a nullable para evitar el LateInitializationError
   CameraPosition? _posicionInicial; 
   bool _tieneCoordenadasValidas = false;
 
   @override
   void initState() {
     super.initState();
-    _procesarPuntosYMarcadores();
-    if (widget.polylineCodificada != null && widget.polylineCodificada!.isNotEmpty) {
-      _decodificarPolyline();
-    }
+    // Ejecutamos todo el procesamiento en un solo bloque estructurado
+    _inicializarMapa();
   }
 
-  void _procesarPuntosYMarcadores() {
+  void _inicializarMapa() {
+    // 1. Procesar puntos y marcadores en variables locales
     double latInicial = -33.4489; 
     double lngInicial = -70.6693;
 
     if (widget.puntosDeReciclaje.isEmpty) return;
 
-    // Colecciones locales temporales para evitar múltiples setStates
     final Set<Marker> marcadoresLocales = {};
+    final Set<Polyline> polylinesLocales = {};
 
     if (widget.puntosOrdenados != null && widget.puntosOrdenados!.isNotEmpty) {
       int indexParada = 1;
@@ -124,34 +122,42 @@ class _MapaScreenState extends State<MapaScreen> {
       }
     }
 
-    // UN SOLO setState al final de procesar todo el set
+    // 2. Decodificar la Polyline de manera local inmediatamente después
+    if (widget.polylineCodificada != null && widget.polylineCodificada!.isNotEmpty) {
+      try {
+        PolylinePoints polylinePoints = PolylinePoints();
+        List<PointLatLng> result = polylinePoints.decodePolyline(widget.polylineCodificada!);
+        
+        if (result.isNotEmpty) {
+          List<LatLng> polylineCoordinates = result.map((p) => LatLng(p.latitude, p.longitude)).toList();
+
+          polylinesLocales.add(
+            Polyline(
+              polylineId: const PolylineId('ruta_actual'),
+              color: Colors.blue, // Asegúrate de que resalte en el mapa
+              points: polylineCoordinates,
+              width: 6, // Un poco más grueso para que se note claramente
+            ),
+          );
+        } else {
+          debugPrint("⚠️ Alerta RedCicla: El string de polyline no generó coordenadas al decodificar.");
+        }
+      } catch (e) {
+        debugPrint("❌ Error decodificando polyline: $e");
+      }
+    } else {
+      debugPrint("⚠️ Alerta RedCicla: 'polylineCodificada' llegó NULL o VACÍO a MapaScreen.");
+    }
+
+    // 3. Un ÚNICO setState que refresca el árbol de widgets con todo listo
     setState(() {
       _marcadores.addAll(marcadoresLocales);
+      _polylines.addAll(polylinesLocales);
       _posicionInicial = CameraPosition(
         target: LatLng(latInicial, lngInicial),
-        zoom: 14.0,
+        zoom: 13.5,
       );
     });
-  }
-
-  void _decodificarPolyline() {
-    PolylinePoints polylinePoints = PolylinePoints();
-    List<PointLatLng> result = polylinePoints.decodePolyline(widget.polylineCodificada!);
-    
-    if (result.isNotEmpty) {
-      List<LatLng> polylineCoordinates = result.map((p) => LatLng(p.latitude, p.longitude)).toList();
-
-      setState(() {
-        _polylines.add(
-          Polyline(
-            polylineId: const PolylineId('ruta_actual'),
-            color: Colors.blue,
-            points: polylineCoordinates,
-            width: 5,
-          ),
-        );
-      });
-    }
   }
 
   @override
@@ -162,16 +168,17 @@ class _MapaScreenState extends State<MapaScreen> {
         backgroundColor: Colors.green,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      // Mostramos un indicador de carga si la posición inicial aún no se procesa
       body: _posicionInicial == null 
         ? const Center(child: CircularProgressIndicator(color: Colors.green))
         : GoogleMap(
             initialCameraPosition: _posicionInicial!,
             markers: _marcadores,
-            polylines: _polylines,
+            polylines: _polylines, // Se inyectan directamente aquí
             mapType: MapType.normal,
             myLocationButtonEnabled: true,
             compassEnabled: true,
+            // Desactiva las herramientas de navegación externa por defecto de Google
+            mapToolbarEnabled: false, 
           ),
     );
   }
