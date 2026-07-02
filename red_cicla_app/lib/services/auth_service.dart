@@ -51,7 +51,7 @@ class AuthService {
               'contraseña': contrasena,
             }),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 3));
 
       final data = jsonDecode(utf8.decode(response.bodyBytes));
 
@@ -76,7 +76,7 @@ class AuthService {
       debugPrint('📵 Error de conexión al hacer login: $e');
       return {
         'exito': false,
-        'error': 'No se pudo conectar al servidor. Verifica que esté corriendo y que hayas ejecutado "adb reverse tcp:8000 tcp:8000".',
+        'error': 'No se pudo conectar al servidor. Verifica que el backend esté corriendo y que la dirección IP configurada en api_config.dart sea correcta.',
       };
     }
   }
