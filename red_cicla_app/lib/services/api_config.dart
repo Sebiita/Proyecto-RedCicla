@@ -12,7 +12,7 @@ class ApiConfig {
   // ============================================================
 
   /// URL base del servidor FastAPI. Se actualiza dinámicamente si se llama a descubrirServidor().
-  static String baseUrl = 'http://172.26.13.210:8000';
+  static String baseUrl = 'http://10.128.15.135:8000';
 
   /// Descubre dinámicamente la IP del servidor en la red local.
   static Future<void> descubrirServidor() async {
@@ -29,6 +29,7 @@ class ApiConfig {
       // ¡Tu equipo puede agregar sus propias IPs o nombres de red (.local) aquí!
       // Al compilar, la app probará todas en paralelo y se conectará al PC activo.
       final candidatos = [
+        'http://10.128.15.135:8000',  // PC Nicolás (IP actual)
         'http://192.168.43.6:8000',   // PC Cristian (Hotspot celular actual)
         'http://172.26.13.210:8000',  // PC Cristian (U. de Talca)
         'http://Cristian.local:8000', // PC Cristian (Nombre mDNS de Windows)
