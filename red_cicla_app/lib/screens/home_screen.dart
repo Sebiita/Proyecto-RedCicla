@@ -184,6 +184,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _cargando = false;
       });
     }
+  }
+
   /// True si el usuario logueado tiene rol administrativo.
   bool get _esAdministrador {
     final rol = widget.usuario['rol']?.toString().toLowerCase() ?? '';
