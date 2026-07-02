@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedCicla - Reportes de Rendimiento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex h-screen font-sans text-gray-800 overflow-hidden">
+
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div class="p-6 border-b border-gray-200 flex items-center gap-2 text-green-600 font-bold text-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            Admin Panel
+        </div>
+        <nav class="flex-1 p-4 space-y-2 text-sm font-medium text-gray-600">
+            <a href="admin.html" class="block p-3 rounded-lg hover:bg-gray-50">Dashboard Global</a>
+            <a href="admin.html" class="block p-3 rounded-lg hover:bg-gray-50">Usuarios & Puntos</a>
+            <a href="admin.html" class="block p-3 rounded-lg hover:bg-gray-50">Rutas de Recolección</a>
+            <a href="admin.html" class="block p-3 rounded-lg hover:bg-gray-50">Vehículos & Personal</a>
+            <a href="reportes.html" class="block p-3 rounded-lg bg-green-50 text-green-700">Informes</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white p-4 border-b border-gray-200 flex justify-between items-center">
+            <h1 class="text-xl font-bold">Reportes de Rendimiento</h1>
+            <div class="flex items-center gap-3">
+                <span class="text-sm">Elena P. (Administrador)</span>
+                <button class="text-sm text-red-500 border border-red-500 px-3 py-1 rounded hover:bg-red-50">Salir</button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <!-- Filtros -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <h2 class="font-bold mb-4 text-gray-700">Filtros</h2>
+                <form id="filtros-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha inicio</label>
+                        <input type="date" id="fecha_inicio"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha fin</label>
+                        <input type="date" id="fecha_fin"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Camión (patente)</label>
+                        <input type="text" id="camion_asignado" placeholder="Ej: TEST-01"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Chofer (correo)</label>
+                        <input type="text" id="chofer_asignado" placeholder="Ej: conductor@redcicla.cl"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                </form>
+                <div class="mt-4 flex gap-3">
+                    <button id="btn-generar"
+                        class="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-green-700 shadow">
+                        Generar reporte
+                    </button>
+                    <button id="btn-limpiar"
+                        class="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
+                        Limpiar filtros
+                    </button>
+                </div>
+            </div>
+
+            <!-- Estado de carga / error -->
+            <div id="mensaje" class="hidden mb-6 p-4 rounded-lg text-sm"></div>
+
+            <!-- Métricas principales -->
+            <div id="resultados" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <p class="text-xs text-gray-500 uppercase font-semibold">Total de rutas</p>
+                        <p id="metrica-total-rutas" class="text-3xl font-extrabold text-green-600 mt-1">-</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <p class="text-xs text-gray-500 uppercase font-semibold">Peso total recolectado</p>
+                        <p id="metrica-peso-total" class="text-3xl font-extrabold text-green-600 mt-1">-</p>
+                        <p class="text-xs text-gray-400 mt-1">kg</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <p class="text-xs text-gray-500 uppercase font-semibold">Eficiencia kg/km</p>
+                        <p id="metrica-eficiencia" class="text-3xl font-extrabold text-green-600 mt-1">-</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <h3 class="font-bold text-gray-700 mb-3">Rutas por estado</h3>
+                        <ul id="lista-estados" class="space-y-2 text-sm"></ul>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <h3 class="font-bold text-gray-700 mb-3">Otros indicadores</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex justify-between"><span>Peso promedio por ruta</span><span id="ind-peso-promedio" class="font-semibold">-</span></li>
+                            <li class="flex justify-between"><span>Tiempo total</span><span id="ind-tiempo-total" class="font-semibold">-</span></li>
+                            <li class="flex justify-between"><span>Tiempo promedio por ruta</span><span id="ind-tiempo-promedio" class="font-semibold">-</span></li>
+                            <li class="flex justify-between"><span>Distancia total</span><span id="ind-distancia-total" class="font-semibold">-</span></li>
+                            <li class="flex justify-between"><span>Distancia promedio por ruta</span><span id="ind-distancia-promedio" class="font-semibold">-</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Rendimiento por camión -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <h3 class="font-bold text-gray-700 mb-4">Rendimiento por camión</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-gray-600 font-semibold">
+                                <tr>
+                                    <th class="px-4 py-2">Patente</th>
+                                    <th class="px-4 py-2">Capacidad (kg)</th>
+                                    <th class="px-4 py-2">Kilos recogidos</th>
+                                    <th class="px-4 py-2">Rutas asignadas</th>
+                                    <th class="px-4 py-2">Rendimiento</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-camiones"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Eficiencia por conductor -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="font-bold text-gray-700 mb-4">Eficiencia por conductor</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-gray-600 font-semibold">
+                                <tr>
+                                    <th class="px-4 py-2">Correo</th>
+                                    <th class="px-4 py-2">Rutas realizadas</th>
+                                    <th class="px-4 py-2">Kilos recogidos</th>
+                                    <th class="px-4 py-2">Peso promedio por ruta</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-conductores"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:8000";
+
+        function mostrarMensaje(texto, tipo = "info") {
+            const el = document.getElementById("mensaje");
+            el.textContent = texto;
+            el.classList.remove("hidden", "bg-green-100", "text-green-800", "bg-red-100", "text-red-800", "bg-blue-100", "text-blue-800");
+            if (tipo === "error") el.classList.add("bg-red-100", "text-red-800");
+            else if (tipo === "exito") el.classList.add("bg-green-100", "text-green-800");
+            else el.classList.add("bg-blue-100", "text-blue-800");
+            el.classList.remove("hidden");
+        }
+
+        function ocultarMensaje() {
+            document.getElementById("mensaje").classList.add("hidden");
+        }
+
+        function formatearNumero(valor) {
+            if (valor === null || valor === undefined) return "-";
+            return Number(valor).toLocaleString("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function generarReporte() {
+            ocultarMensaje();
+            const fechaInicio = document.getElementById("fecha_inicio").value;
+            const fechaFin = document.getElementById("fecha_fin").value;
+            const camion = document.getElementById("camion_asignado").value.trim();
+            const chofer = document.getElementById("chofer_asignado").value.trim();
+
+            const params = new URLSearchParams();
+            if (fechaInicio) params.append("fecha_inicio", fechaInicio);
+            if (fechaFin) params.append("fecha_fin", fechaFin);
+            if (camion) params.append("camion_asignado", camion);
+            if (chofer) params.append("chofer_asignado", chofer);
+
+            try {
+                const respuesta = await fetch(`${API_BASE}/reportes/rendimiento?${params.toString()}`);
+                if (!respuesta.ok) {
+                    const error = await respuesta.json();
+                    throw new Error(error.detail || "Error al generar el reporte");
+                }
+                const data = await respuesta.json();
+                renderizarReporte(data);
+            } catch (error) {
+                mostrarMensaje(error.message, "error");
+                document.getElementById("resultados").classList.add("hidden");
+            }
+        }
+
+        function renderizarReporte(data) {
+            document.getElementById("resultados").classList.remove("hidden");
+
+            document.getElementById("metrica-total-rutas").textContent = data.total_rutas;
+            document.getElementById("metrica-peso-total").textContent = formatearNumero(data.peso_total_recogido_kg);
+            document.getElementById("metrica-eficiencia").textContent = formatearNumero(data.eficiencia_kg_por_km);
+
+            const listaEstados = document.getElementById("lista-estados");
+            listaEstados.innerHTML = "";
+            for (const [estado, cantidad] of Object.entries(data.rutas_por_estado)) {
+                const li = document.createElement("li");
+                li.className = "flex justify-between border-b border-gray-100 pb-1";
+                li.innerHTML = `<span>${estado}</span><span class="font-semibold">${cantidad}</span>`;
+                listaEstados.appendChild(li);
+            }
+
+            document.getElementById("ind-peso-promedio").textContent = formatearNumero(data.peso_promedio_por_ruta_kg) + " kg";
+            document.getElementById("ind-tiempo-total").textContent = formatearNumero(data.tiempo_total_horas) + " h";
+            document.getElementById("ind-tiempo-promedio").textContent = formatearNumero(data.tiempo_promedio_por_ruta_horas) + " h";
+            document.getElementById("ind-distancia-total").textContent = formatearNumero(data.distancia_total_km) + " km";
+            document.getElementById("ind-distancia-promedio").textContent = formatearNumero(data.distancia_promedio_por_ruta_km) + " km";
+
+            const tablaCamiones = document.getElementById("tabla-camiones");
+            tablaCamiones.innerHTML = "";
+            if (data.rendimiento_por_camion.length === 0) {
+                tablaCamiones.innerHTML = `<tr><td colspan="5" class="px-4 py-3 text-gray-500">No hay datos de camiones para los filtros seleccionados.</td></tr>`;
+            } else {
+                data.rendimiento_por_camion.forEach(camion => {
+                    const tr = document.createElement("tr");
+                    tr.className = "border-b border-gray-100";
+                    tr.innerHTML = `
+                        <td class="px-4 py-2 font-medium">${camion.patente}</td>
+                        <td class="px-4 py-2">${formatearNumero(camion.capacidad)}</td>
+                        <td class="px-4 py-2">${formatearNumero(camion.kilos_recogidos)}</td>
+                        <td class="px-4 py-2">${camion.rutas_asignadas}</td>
+                        <td class="px-4 py-2">${formatearNumero(camion.rendimiento)}</td>
+                    `;
+                    tablaCamiones.appendChild(tr);
+                });
+            }
+
+            const tablaConductores = document.getElementById("tabla-conductores");
+            tablaConductores.innerHTML = "";
+            if (data.eficiencia_por_conductor.length === 0) {
+                tablaConductores.innerHTML = `<tr><td colspan="4" class="px-4 py-3 text-gray-500">No hay datos de conductores para los filtros seleccionados.</td></tr>`;
+            } else {
+                data.eficiencia_por_conductor.forEach(conductor => {
+                    const tr = document.createElement("tr");
+                    tr.className = "border-b border-gray-100";
+                    tr.innerHTML = `
+                        <td class="px-4 py-2 font-medium">${conductor.chofer_email}</td>
+                        <td class="px-4 py-2">${conductor.rutas_realizadas}</td>
+                        <td class="px-4 py-2">${formatearNumero(conductor.kilos_recogidos)}</td>
+                        <td class="px-4 py-2">${formatearNumero(conductor.peso_promedio_por_ruta)} kg</td>
+                    `;
+                    tablaConductores.appendChild(tr);
+                });
+            }
+        }
+
+        document.getElementById("btn-generar").addEventListener("click", generarReporte);
+        document.getElementById("btn-limpiar").addEventListener("click", () => {
+            document.getElementById("filtros-form").reset();
+            document.getElementById("resultados").classList.add("hidden");
+            ocultarMensaje();
+        });
+    </script>
+</body>
+
+</html>

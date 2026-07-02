@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../services/ficha_service.dart';
 
 class FichaScreen extends StatefulWidget {
@@ -39,6 +42,75 @@ class _FichaScreenState extends State<FichaScreen> {
     super.dispose();
   }
 
+  // Variables de fotos
+  File? _fotoAntes;
+  File? _fotoDespues;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _seleccionarImagen(bool esAntes) async {
+    final ImageSource? origen = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Tomar Foto (Cámara)'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Seleccionar de Galería'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (origen == null) return;
+
+    try {
+      final XFile? imagenSeleccionada = await _picker.pickImage(
+        source: origen,
+        imageQuality: 50,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (imagenSeleccionada != null) {
+        setState(() {
+          if (esAntes) {
+            _fotoAntes = File(imagenSeleccionada.path);
+          } else {
+            _fotoDespues = File(imagenSeleccionada.path);
+          }
+        });
+      }
+    } catch (e) {
+      _mostrarSnackBar('❌ Error al seleccionar imagen: $e', Colors.red);
+    }
+  }
+
+  Future<String> _subirImagen(File file, String subDir) async {
+    try {
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('fichas')
+          .child(widget.rutaId)
+          .child(subDir)
+          .child(fileName);
+
+      final uploadTask = await ref.putFile(file);
+      final url = await uploadTask.ref.getDownloadURL();
+      return url;
+    } catch (e) {
+      debugPrint('Error al subir imagen a Firebase Storage: $e');
+      rethrow;
+    }
+  }
+
   /// Guarda la ficha localmente como diccionario y la envía al servidor
   Future<void> _finalizarRetiro() async {
     // Validar que los kilos estén llenos
@@ -54,7 +126,30 @@ class _FichaScreenState extends State<FichaScreen> {
       return;
     }
 
+    // Validar fotos requeridas
+    if (_fotoAntes == null) {
+      _mostrarSnackBar('⚠️ Debes seleccionar la foto del ANTES', Colors.orange);
+      return;
+    }
+    if (_fotoDespues == null) {
+      _mostrarSnackBar('⚠️ Debes seleccionar la foto del DESPUÉS', Colors.orange);
+      return;
+    }
+
     setState(() => _enviando = true);
+
+    String fotoAntesUrl = '';
+    String fotoDespuesUrl = '';
+
+    try {
+      // Subir las imágenes
+      fotoAntesUrl = await _subirImagen(_fotoAntes!, 'antes');
+      fotoDespuesUrl = await _subirImagen(_fotoDespues!, 'despues');
+    } catch (e) {
+      setState(() => _enviando = false);
+      _mostrarSnackBar('❌ Error al subir fotos: Revisa tu conexión a internet.', Colors.red);
+      return;
+    }
 
     // 1. CREAR EL DICCIONARIO Y GUARDARLO EN FIREBASE (Cache/Nube)
     await FichaService.crearFichaLocal(
@@ -62,8 +157,8 @@ class _FichaScreenState extends State<FichaScreen> {
       puntoId: widget.puntoId,
       kilosRecogidos: kilos,
       observaciones: _observacionesController.text.trim(),
-      fotoAntesUrl: '', // Por ahora sin fotos
-      fotoDespuesUrl: '',
+      fotoAntesUrl: fotoAntesUrl,
+      fotoDespuesUrl: fotoDespuesUrl,
     );
 
     setState(() {
@@ -185,38 +280,74 @@ class _FichaScreenState extends State<FichaScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // El recuadro de la foto
-                      Container(
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(15),
-                          // Nota: En Flutter nativo el borde punteado requiere un paquete extra (dotted_border).
-                          // Aquí usamos un borde sólido claro para mantenerlo simple y sin instalar nada extra aún.
-                          border: Border.all(
-                            color: Colors.grey[300]!,
-                            width: 2,
+                      GestureDetector(
+                        onTap: () => _seleccionarImagen(true),
+                        child: Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: Colors.grey[300]!,
+                              width: 2,
+                            ),
                           ),
-                        ),
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.camera_alt_outlined,
-                                color: Colors.grey,
-                                size: 32,
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Subir Foto',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
+                          child: _fotoAntes != null
+                              ? Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(13),
+                                      child: Image.file(
+                                        _fotoAntes!,
+                                        height: 120,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 4,
+                                      right: 4,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() => _fotoAntes = null);
+                                        },
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          padding: const EdgeInsets.all(4),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.camera_alt_outlined,
+                                        color: Colors.grey,
+                                        size: 32,
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Subir Foto',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ],
@@ -238,35 +369,74 @@ class _FichaScreenState extends State<FichaScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Container(
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(
-                            color: Colors.grey[300]!,
-                            width: 2,
+                      GestureDetector(
+                        onTap: () => _seleccionarImagen(false),
+                        child: Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: Colors.grey[300]!,
+                              width: 2,
+                            ),
                           ),
-                        ),
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.camera_alt_outlined,
-                                color: Colors.grey,
-                                size: 32,
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Subir Foto',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
+                          child: _fotoDespues != null
+                              ? Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(13),
+                                      child: Image.file(
+                                        _fotoDespues!,
+                                        height: 120,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 4,
+                                      right: 4,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() => _fotoDespues = null);
+                                        },
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          padding: const EdgeInsets.all(4),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.camera_alt_outlined,
+                                        color: Colors.grey,
+                                        size: 32,
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Subir Foto',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ],

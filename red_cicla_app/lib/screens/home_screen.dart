@@ -6,6 +6,7 @@ import '../services/auth_service.dart';
 import '../services/ficha_service.dart';
 import 'ficha_screen.dart';
 import 'estadistica_screen.dart';
+import 'reportes_rendimiento_screen.dart';
 import 'login_screen.dart';
 import 'mapa_screen.dart';
 
@@ -183,6 +184,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _cargando = false;
       });
     }
+  /// True si el usuario logueado tiene rol administrativo.
+  bool get _esAdministrador {
+    final rol = widget.usuario['rol']?.toString().toLowerCase() ?? '';
+    return rol.contains('admin');
   }
 
   // ── Build ─────────────────────────────────────────────────────
@@ -219,11 +224,16 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       // ── BottomNavigationBar ───────────────────────────────────
+      // La pestaña Reportes solo se muestra a usuarios administradores.
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _tabActual,
         selectedItemColor: Colors.green,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
+          // Índice del botón Salir depende de si se muestra Reportes o no
+          final indexSalir = _esAdministrador ? 3 : 2;
+          final indexReportes = _esAdministrador ? 2 : -1;
+
           if (index == 1 && _ruta != null) {
             // Tab Estadísticas
             Navigator.push(
@@ -240,23 +250,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             );
-          } else if (index == 2) {
+          } else if (index == indexReportes) {
+            // Tab Reportes (solo administradores)
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ReportesRendimientoScreen(),
+              ),
+            );
+          } else if (index == indexSalir) {
             // Tab Perfil / Cerrar sesión
             _cerrarSesion();
           } else {
             setState(() => _tabActual = index);
           }
         },
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.route),
             label: 'Ruta',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
             label: 'Estadísticas',
           ),
-          BottomNavigationBarItem(
+          if (_esAdministrador)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.insert_chart_outlined),
+              label: 'Reportes',
+            ),
+          const BottomNavigationBarItem(
             icon: Icon(Icons.logout),
             label: 'Salir',
           ),
