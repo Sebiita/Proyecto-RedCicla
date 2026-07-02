@@ -396,6 +396,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    // Cargar datos iniciales aunque Google Maps no esté disponible
+    // Esto asegura que los datalists (camiones/usuarios) y la lista de rutas/puntos
+    // estén disponibles al abrir el modal incluso sin API key.
+    cargarDatos();
 
     const btnSalir = document.getElementById('btn-salir');
     if (btnSalir) {
