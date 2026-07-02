@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutas de Recolección - RedCicla Admin</title>
+    <meta name="description" content="Visualización y gestión de rutas de recolección en el panel de administración de RedCicla.">
+    <script>
+        (function () {
+            const host = window.location.hostname;
+            if (host === '127.0.0.1' || host === 'localhost') {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.tailwindcss.com';
+                s.defer = true;
+                document.head.appendChild(s);
+            } else {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '/static/css/tailwind.css';
+                document.head.appendChild(link);
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/puntos-mapa.css">
+</head>
+
+<body class="admin-layout">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="admin-sidebar">
+        <a href="landing.html" class="sidebar-logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            Admin Panel
+        </a>
+        <nav class="sidebar-nav">
+            <a href="#">Dashboard Global</a>
+            <a href="puntos-mapa.html">Mapa de Puntos</a>
+            <a href="puntos-registro.html">Registrar Puntos</a>
+            <a href="rutas.html" class="active">Rutas de Recolección</a>
+            <a href="vehiculos-personal.html">Vehículos &amp; Personal</a>
+            <a href="#">Informes</a>
+        </nav>
+    </aside>
+
+    <!-- ========== CONTENIDO PRINCIPAL ========== -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Rutas de Recolección</h1>
+            <div class="header-user">
+                <span>...</span>
+                <button class="btn-salir" id="btn-salir">Salir</button>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <!-- ===== PANEL IZQUIERDO: LISTA DE RUTAS ===== -->
+            <div class="mapa-panel-lista">
+                <div class="panel-lista-header">
+                    <h2>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
+                            </path>
+                        </svg>
+                        Rutas
+                    </h2>
+                    
+                    <button id="btn-nueva-ruta" style="width: 100%; padding: 8px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; margin-bottom: 10px;">
+                        + Crear Nueva Ruta
+                    </button>
+
+                    <div class="buscar-wrapper">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" class="buscar-input" id="buscar-ruta" placeholder="Buscar por fecha o camión...">
+                    </div>
+                </div>
+
+                <div class="puntos-lista" id="rutas-lista">
+                    <!-- Dinámico -->
+                </div>
+
+                <div class="lista-counter" id="lista-counter">
+                    0 rutas encontradas
+                </div>
+            </div>
+
+            <!-- ===== PANEL PRINCIPAL: MAPA ===== -->
+            <div class="mapa-panel-mapa">
+                <div id="mapa-google">
+                    <div class="mapa-placeholder" id="mapa-placeholder">
+                        <div class="mapa-placeholder-content">
+                            <p class="mapa-title">Google Maps API</p>
+                            <p class="mapa-subtitle">Configurar API key para visualizar el mapa interactivo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Crear Ruta -->
+    <div id="modal-crear-ruta" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
+        <div style="background:white; padding:20px; border-radius:8px; width:450px; max-height:80vh; overflow-y:auto; font-family:sans-serif;">
+            <h2 id="modal-title" style="margin-top:0;">Crear Nueva Ruta</h2>
+            <form id="form-crear-ruta">
+                <input type="hidden" id="ruta-id">
+                <label style="display:block; margin-bottom:10px;">
+                    Fecha Programada:
+                    <input type="date" id="ruta-fecha" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
+                </label>
+                <label style="display:block; margin-bottom:10px;">
+                    Camión Asignado (Patente):
+                    <input type="text" id="ruta-camion" list="lista-camiones" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
+                </label>
+                
+                <label style="display:block; margin-bottom:10px;">
+                    Chofer Asignado (Correo):
+                    <input type="text" id="ruta-chofer" list="lista-usuarios" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
+                </label>
+                
+                <label style="display:block; margin-bottom:10px;">
+                    Ayudante Asignado (Correo):
+                    <input type="text" id="ruta-ayudante" list="lista-usuarios" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
+                </label>
+
+                <datalist id="lista-camiones"></datalist>
+                <datalist id="lista-usuarios"></datalist>
+                
+                <label style="display:block; margin-bottom:10px;">
+                    Cantón (Inicio y Fin):
+                    <select id="ruta-canton" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
+                        <option value="">Cargando cantones...</option>
+                    </select>
+                </label>
+                
+                <p style="font-weight:600; margin-bottom:4px;">Puntos a visitar (selecciona al menos 1):</p>
+                <div id="selector-puntos" style="border:1px solid #ccc; padding:10px; max-height:150px; overflow-y:auto; border-radius:4px; margin-bottom:10px;">
+                    <!-- Se llena dinámicamente con checkboxes -->
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button type="button" id="btn-cancelar-ruta" style="flex:1; padding:8px; background:#ccc; border:none; border-radius:4px; cursor:pointer;">Cancelar</button>
+                    <button type="submit" style="flex:1; padding:8px; background:#10b981; color:white; border:none; border-radius:4px; cursor:pointer;">Generar y Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========== CONTENEDOR TOASTS ========== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/config');
+                if (!res.ok) throw new Error('No se pudo obtener la configuración');
+                const cfg = await res.json();
+                const key = cfg.google_maps_api_key;
+                const keyValid = cfg.google_maps_api_key_valid;
+
+                if (!key || !keyValid) {
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initMap`;
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            } catch (err) {
+                console.error('Error cargando configuración:', err);
+            }
+        })();
+    </script>
+    <script src="js/puntos-service.js"></script>
+    <script src="js/rutas-service.js"></script>
+    <script src="js/rutas-mapa.js"></script>
+</body>
+</html>
